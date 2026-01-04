@@ -1,0 +1,462 @@
+/* ========================================= */
+/* BASE / GENERAL (OPTIMIZADO PARA COMPATIBILIDAD) */
+/* ========================================= */
+:root {
+    /* Colores con alto contraste */
+    --COLOR_BACKGROUND: #121212; /* Fondo oscuro casi negro */
+    --COLOR_TEXT: #F5F5F5; /* Texto blanco brillante */
+    --COLOR_HEADER: #004D40; /* Verde oscuro (Base del ARCA) */
+    --COLOR_PRINCIPAL: #00897B; /* Verde principal */
+    --COLOR_ACCENT: #FFC107; /* Amarillo/Dorado (Acento principal) */
+    --COLOR_PELIGRO: #E53935; /* Rojo fuerte */
+    --COLOR_ALERTA: #FFEE58; /* Amarillo claro */
+    --COLOR_EXITO: #4CAF50; /* Verde brillante (Éxito) */
+    --COLOR_NEUTRO: #616161; /* Gris oscuro */
+    --COLOR_CARD_BG: #1E1E1E; /* Fondo de tarjeta */
+    
+    --FONT_FAMILY: 'Arial', sans-serif;
+    --BASE_FONT_SIZE: 17px;
+}
+
+body {
+    background-color: var(--COLOR_BACKGROUND);
+    color: var(--COLOR_TEXT);
+    font-family: var(--FONT_FAMILY);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    box-sizing: border-box; 
+    font-size: var(--BASE_FONT_SIZE); 
+}
+
+#app {
+    width: 98%; 
+    max-width: 1200px; /* Ancho máximo para escritorio */
+    margin: 0 auto; 
+    padding: 10px 0; 
+}
+
+h2 {
+    margin: 0;
+    color: var(--COLOR_ACCENT);
+}
+
+/* ========================================= */
+/* HEADER Y ESTADO DEL JUEGO */
+/* ========================================= */
+
+.game-header {
+    background-color: var(--COLOR_HEADER);
+    padding: 15px 25px;
+    border-radius: 10px 10px 0 0;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Para responsive */
+}
+
+.game-title {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--COLOR_ALERTA);
+}
+
+.game-info {
+    display: flex;
+    gap: 20px;
+    font-size: 1em;
+}
+
+.info-item {
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.life-display {
+    font-size: 1.3em;
+    margin-right: 5px;
+    letter-spacing: 2px;
+}
+
+.life-slot {
+    color: var(--COLOR_NEUTRO); /* Icono inactivo */
+}
+
+.life-slot.active {
+    color: var(--COLOR_PELIGRO); /* Icono activo */
+    animation: pulse-life 1s infinite alternate; /* Animación sutil */
+}
+
+.life-slot.active.danger {
+    color: var(--COLOR_PELIGRO);
+    animation: critical-pulse 0.5s infinite alternate;
+}
+
+@keyframes pulse-life {
+    from { opacity: 0.8; }
+    to { opacity: 1; }
+}
+
+@keyframes critical-pulse {
+    from { transform: scale(1.0); color: var(--COLOR_ALERTA); }
+    to { transform: scale(1.1); color: var(--COLOR_PELIGRO); }
+}
+
+
+/* ========================================= */
+/* NOTIFICACIONES */
+/* ========================================= */
+
+#turn-event-notification {
+    background-color: var(--COLOR_CARD_BG);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    border: 4px solid var(--COLOR_HEADER); /* Borde inicial */
+    min-height: 50px;
+}
+
+#notification-text {
+    font-size: 1.1em;
+    line-height: 1.4;
+}
+
+.abuela-quote {
+    font-style: italic;
+    color: var(--COLOR_ALERTA);
+}
+
+/* ========================================= */
+/* WIDGETS DE ZONA (GRÁFICOS DE PROGRESO) */
+/* ========================================= */
+
+.zone-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.zone-widget {
+    background-color: var(--COLOR_CARD_BG);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--COLOR_NEUTRO);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.zone-widget:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.6);
+}
+
+.zone-name {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--COLOR_ACCENT);
+    margin-bottom: 10px;
+}
+
+.zone-pop-count {
+    font-size: 0.9em;
+    color: var(--COLOR_TEXT);
+}
+
+.progress-bar {
+    background-color: #333;
+    border-radius: 5px;
+    height: 30px;
+    margin-top: 10px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%; /* Se actualiza con JS */
+    transition: width 0.5s ease-out;
+    background-color: var(--COLOR_EXITO); /* Color por defecto, se ajusta con HSL */
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.zone-pop-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--COLOR_BACKGROUND); 
+    font-weight: bold;
+    z-index: 2; /* Sobre la barra */
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+}
+
+.danger-pulse {
+    animation: danger-glow 1s infinite alternate;
+}
+
+@keyframes danger-glow {
+    from { box-shadow: 0 0 5px var(--COLOR_PELIGRO); }
+    to { box-shadow: 0 0 10px var(--COLOR_PELIGRO); }
+}
+
+/* ========================================= */
+/* BOTONES DE ACCIÓN (CARDS) */
+/* ========================================= */
+
+.action-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.action-card {
+    background-color: var(--COLOR_CARD_BG);
+    color: var(--COLOR_TEXT);
+    padding: 15px;
+    border-radius: 8px;
+    border: 3px solid transparent; 
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100px; 
+}
+
+.action-card:hover:not(.selected) {
+    border-color: var(--COLOR_NEUTRO);
+    transform: scale(1.02);
+}
+
+.action-card.selected {
+    border-color: var(--COLOR_ACCENT);
+    background-color: #303030;
+    box-shadow: 0 0 15px var(--COLOR_ACCENT);
+    transform: scale(1.05);
+}
+
+.card-emoji {
+    font-size: 2.5em;
+    margin-bottom: 5px;
+    line-height: 1;
+}
+
+.card-title {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+/* ========================================= */
+/* CONFIRMACIÓN DE ACCIÓN */
+/* ========================================= */
+
+#action-details-notification {
+    background-color: #303030;
+    color: var(--COLOR_TEXT);
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 2px solid var(--COLOR_ACCENT);
+    font-size: 1.1em;
+}
+
+#action-details-notification.hidden {
+    display: none;
+}
+
+.confirmation-box {
+    text-align: center;
+}
+
+.confirmation-cost {
+    color: var(--COLOR_PELIGRO); /* Costo: se pone rojo */
+    font-weight: bold;
+}
+
+.confirmation-gain {
+    color: var(--COLOR_EXITO); /* Ganancia: se pone verde */
+    font-weight: bold;
+}
+
+.confirmation-neutral {
+    color: var(--COLOR_ALERTA);
+    font-weight: bold;
+}
+
+/* ========================================= */
+/* CONTROLES DEL JUEGO */
+/* ========================================= */
+
+#game-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    margin-top: 25px;
+    border-top: 2px solid #333; 
+}
+
+.game-action-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+#game-controls button {
+    background-color: var(--COLOR_PRINCIPAL);
+    color: var(--COLOR_TEXT);
+    padding: 12px 25px; 
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+#menu-btn {
+    background-color: var(--COLOR_NEUTRO) !important;
+}
+
+/* Efecto de Hover/Active más robusto */
+#game-controls button:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.5);
+    background-color: var(--COLOR_ACCENT);
+    color: var(--COLOR_BACKGROUND);
+}
+
+#game-controls button:active:not(:disabled) {
+    transform: translateY(-1px) scale(0.98);
+}
+
+#game-controls button:disabled {
+    background-color: #424242;
+    color: #9E9E9E;
+    cursor: not-allowed;
+    /* Quitar efectos de animación en disabled */
+    transform: none;
+    box-shadow: none;
+}
+
+/* ======================================================= */
+/* ESTILOS DEL MODAL (POP-UP) */
+/* ======================================================= */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9); /* Fondo oscuro semitransparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Asegura que esté por encima de todo */
+}
+
+.modal-content {
+    background-color: var(--COLOR_CARD_BG); /* Usando variables del tema oscuro */
+    color: var(--COLOR_TEXT);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px var(--COLOR_PELIGRO);
+    max-width: 500px;
+    width: 90%;
+    text-align: left;
+    border: 3px solid var(--COLOR_ACCENT);
+}
+
+.modal-content h3 {
+    text-align: center;
+    color: var(--COLOR_ACCENT);
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+.modal-content h4 {
+    color: var(--COLOR_ALERTA);
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+.modal-content ul {
+    list-style-type: '🌱 ';
+    margin-left: 20px;
+    padding-left: 0;
+}
+
+.modal-content li {
+    margin-bottom: 8px;
+}
+
+#cerrar-reglas-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 25px;
+    background-color: var(--COLOR_PRINCIPAL);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#cerrar-reglas-btn:hover {
+    background-color: var(--COLOR_HEADER);
+}
+
+/* El modal se oculta por defecto y se muestra por JS */
+#modal-reglas {
+    display: none; 
+}
+
+
+/* ========================================= */
+/* MEDIA QUERIES (RESPONSIVE) */
+/* ========================================= */
+
+@media (max-width: 800px) {
+    .game-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .game-title {
+        margin-bottom: 10px;
+    }
+    .game-info {
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .action-cards {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    
+    #game-controls {
+        flex-direction: column;
+    }
+    
+    .game-action-buttons {
+        margin-top: 10px;
+    }
+    
+    #menu-btn {
+        width: 100%;
+        margin-bottom: 10px;
+        margin-left: 0 !important;
+    }
+}

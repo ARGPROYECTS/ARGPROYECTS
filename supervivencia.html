@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARCA: Último Santuario</title>
+    <link rel="stylesheet" href="supervivencia.css">
+    <script src="supervivencia.js" defer></script>
+</head>
+<body>
+    <div id="app">
+        
+        <div id="game-container" class="view"> 
+            
+            <div class="game-header">
+                <h2 class="game-title">ARCA: Último Santuario</h2>
+                <div class="game-info">
+                    <span class="info-item">Población Total: <strong id="pop-value">0 / 4500</strong></span>
+                    <span class="info-item">Tiempo: <strong id="time-value">00:00</strong></span>
+                    <span class="info-item">Vidas: <span id="life-icons" class="life-display"></span><span id="extra-lives-text"></span></span>
+                </div>
+            </div>
+
+            <div class="zone-grid">
+                <div class="zone-widget" data-zone-id="A">
+                    <div class="zone-name"></div>
+                    <div class="zone-details">
+                        <span class="zone-pop-count"></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill"></div>
+                        <span class="zone-pop-text"></span>
+                    </div>
+                </div>
+                <div class="zone-widget" data-zone-id="P">
+                    <div class="zone-name"></div>
+                    <div class="zone-details">
+                        <span class="zone-pop-count"></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill"></div>
+                        <span class="zone-pop-text"></span>
+                    </div>
+                </div>
+                <div class="zone-widget" data-zone-id="C">
+                    <div class="zone-name"></div>
+                    <div class="zone-details">
+                        <span class="zone-pop-count"></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill"></div>
+                        <span class="zone-pop-text"></span>
+                    </div>
+                </div>
+                <div class="zone-widget" data-zone-id="H">
+                    <div class="zone-name"></div>
+                    <div class="zone-details">
+                        <span class="zone-pop-count"></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill"></div>
+                        <span class="zone-pop-text"></span>
+                    </div>
+                </div>
+                <div class="zone-widget" data-zone-id="L">
+                    <div class="zone-name"></div>
+                    <div class="zone-details">
+                        <span class="zone-pop-count"></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill"></div>
+                        <span class="zone-pop-text"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="turn-event-notification">
+                <p id="notification-text">Simulación al aire. Tienes 5 vidas y 5 ecosistemas en juego. Selecciona una acción para ver sus detalles.</p>
+            </div>
+
+            <div id="action-cards" class="action-cards">
+                </div>
+
+            <div id="action-details-notification" class="hidden confirmation-box">
+                <p id="details-text">Selecciona una acción para ver sus detalles y confirmar.</p>
+            </div>
+
+            <div id="game-controls" class="control-buttons">
+                <button id="menu-btn" onclick="window.location.href='menu_principal.html'">Menú Principal</button>
+                <div class="game-action-buttons">
+                    <button id="confirm-action-btn" disabled>Confirmar Acción</button>
+                    <button id="restart-btn">Reiniciar</button> 
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <div id="modal-reglas" class="modal-overlay">
+        <div class="modal-content">
+            <h3>🌟 Reglas de ARCA: Último Santuario 🌟</h3>
+            <p>¡Eres el **Protector** del último refugio de vida en la Tierra! Tu misión es simple, pero vital:</p>
+            
+            <hr>
+
+            <h4>🎯 Objetivo (Victoria)</h4>
+            <p>Alcanzar una población total de **4,500** o más para asegurar el futuro del planeta.</p>
+
+            <h4>❤️ Tus Vidas de Protector</h4>
+            <ul>
+                <li>Empiezas con **5 Vidas**.</li>
+                <li>Cada acción positiva te **cuesta** Vidas.</li>
+                <li>Cada acción negativa te **hace ganar** Vidas.</li>
+                <li>El **Desgaste Natural** (crisis periódica) puede hacerte perder Vidas si una zona colapsa.</li>
+            </ul>
+
+            <h4>💀 Condiciones de Derrota (¡Peligro!)</h4>
+            <p>El juego termina si ocurre cualquiera de estas dos:</p>
+            <ul>
+                <li>Pierdes todas tus **Vidas de protector** (llegan a 0).</li>
+                <li>La población total cae a **0 o menos del 1%** (45 individuos).</li>
+            </ul>
+            
+            <hr>
+
+            <button id="cerrar-reglas-btn">¡Entendido! Empezar a Proteger</button>
+        </div>
+    </div>
+    </body>
+</html>
