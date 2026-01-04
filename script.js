@@ -1,5 +1,3 @@
-// En tu archivo JavaScript (script.js)
-
 document.addEventListener('DOMContentLoaded', () => {
     // Referencias a elementos del DOM
     const startButton = document.getElementById('startButton'); // VAMOS A JUGAR
@@ -9,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeButton = document.getElementById('close-mode-btn');
     const modal = document.getElementById('mode-modal'); 
 
-    // Nuevos botones de modo de juego dentro del modal
+    // Botones de modo de juego dentro del modal
+    const blockzoidBtn = document.getElementById('blockzoid-btn'); // NUEVO
     const supervivenciaBtn = document.getElementById('supervivencia-btn');
     const destruccionBtn = document.getElementById('destruccion-btn');
 
@@ -24,29 +23,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 1. Ambos botones principales abren el modal de selección de modo
-    
-    // Botón "VAMOS A JUGAR" abre el modal
     startButton.addEventListener('click', openModal);
 
-    // Botón "MODO DE JUEGO" abre el modal
     modeButton.addEventListener('click', (e) => {
         e.preventDefault(); 
         openModal();
     });
 
     // 2. Lógica para cerrar el modal
-    
-    // Cerrar al hacer clic en 'X'
     closeButton.addEventListener('click', closeModal);
 
-    // Cerrar al hacer clic fuera
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             closeModal();
         }
     });
 
-    // Cerrar con la tecla ESC
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.classList.contains('active')) {
             closeModal();
@@ -55,13 +47,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. LÓGICA DE LOS BOTONES DE MODO DE JUEGO
 
-    // Botón MODO SUPERVIVENCIA: Redirige al archivo de juego
+    // Botón BLOCKZOID v2.6
+    blockzoidBtn.addEventListener('click', () => {
+        console.log("Iniciando BLOCKZOID v2.6...");
+        window.location.href = 'Blockzoid v2.6.html';
+    });
+
+    // Botón MODO SUPERVIVENCIA
     supervivenciaBtn.addEventListener('click', () => {
         console.log("Iniciando MODO SUPERVIVENCIA...");
         window.location.href = 'supervivencia.html';
     });
 
-    // Botón MODO DESTRUCCIÓN: Muestra notificación
+    // Botón MODO DESTRUCCIÓN
     destruccionBtn.addEventListener('click', () => {
         alert('🚧 ¡MODO DESTRUCCIÓN en desarrollo! Gracias por tu interés. Estará disponible pronto.');
     });

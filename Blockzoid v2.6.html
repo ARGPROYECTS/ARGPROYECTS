@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Blockzoid V128 - BOSS EDITION PRO</title>
+    <style>
+        :root {
+            --neon-green: #2ecc71; --neon-red: #e74c3c; --neon-gold: #f1c40f;
+            --neon-blue: #3498db; --neon-purple: #9b59b6; --dark-bg: #05070a;
+        }
+        body { margin: 0; overflow: hidden; background-color: var(--dark-bg); font-family: 'Orbitron', sans-serif; user-select: none; }
+        
+        #damage-flash {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(231, 76, 60, 0.3); pointer-events: none;
+            opacity: 0; transition: opacity 0.1s; z-index: 50;
+        }
+
+        .overlay { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; z-index: 100; color: white; text-align: center;
+            background: radial-gradient(circle, rgba(10,15,25,0.9) 0%, #000 100%);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal {
+            background: rgba(5, 10, 15, 0.95); padding: 40px; border: 2px solid var(--neon-green);
+            border-radius: 20px; min-width: 320px; box-shadow: 0 0 30px rgba(46, 204, 113, 0.2);
+        }
+
+        button { 
+            padding: 12px 30px; font-size: 16px; background: var(--neon-green); 
+            border: none; cursor: pointer; font-weight: bold; margin: 8px; 
+            border-radius: 5px; text-transform: uppercase; transition: 0.3s; font-family: 'Orbitron';
+            width: 100%;
+        }
+        button:hover:not(:disabled) { background: #fff; box-shadow: 0 0 20px var(--neon-green); transform: scale(1.05); }
+        button:disabled { background: #444; cursor: not-allowed; opacity: 0.5; }
+        .btn-red { background: var(--neon-red); }
+        .btn-red:hover { box-shadow: 0 0 20px var(--neon-red); }
+
+        .setting-row { margin: 20px 0; text-align: left; }
+        .setting-row label { display: block; font-size: 12px; color: var(--neon-green); margin-bottom: 10px; letter-spacing: 2px; }
+        input[type=range], input[type=number] { width: 100%; cursor: pointer; accent-color: var(--neon-green); background: #111; border: 1px solid #333; color: white; padding: 5px; box-sizing: border-box; }
+
+        #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; color: white; z-index: 10; display: none; }
+        #top-bar { position: absolute; top: 30px; width: 100%; display: flex; justify-content: space-between; padding: 0 50px; box-sizing: border-box; }
+        
+        #hud { position: absolute; bottom: 40px; left: 40px; background: rgba(0,0,0,0.85); padding: 25px; border-left: 6px solid var(--neon-green); border-radius: 0 10px 10px 0; }
+        .val { font-size: 35px; font-weight: bold; }
+        .bar-cont { width: 250px; height: 12px; background: #111; margin-top: 10px; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
+        #hp-bar { width: 100%; height: 100%; background: linear-gradient(90deg, #c0392b, #ff4d4d); transition: width 0.2s; }
+        #stamina-bar { width: 100%; height: 100%; background: linear-gradient(90deg, #2980b9, #00d2ff); }
+
+        .weapon-slot { display: inline-block; padding: 8px 15px; background: #222; border: 1px solid #444; margin-right: 5px; font-size: 14px; border-radius: 4px; color: #555; }
+        .weapon-slot.active { color: #fff; border-color: var(--neon-green); background: rgba(46, 204, 113, 0.3); }
+
+        #wave-timer { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); text-align: center; display: none; }
+        #shop-prompt { position: absolute; bottom: 35%; left: 50%; transform: translateX(-50%); color: var(--neon-green); font-weight: bold; display: none; font-size: 20px; }
+        #boss-alert { position: absolute; top: 150px; left: 50%; transform: translateX(-50%); color: var(--neon-red); font-size: 40px; font-weight: bold; display: none; text-shadow: 0 0 20px red; text-align: center; z-index: 200; }
+
+        /* NUEVO: Notificaciones de Habilidad */
+        #skill-notify {
+            position: absolute; top: 25%; left: 50%; transform: translate(-50%, -50%);
+            color: white; font-size: 24px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 5px; text-shadow: 0 0 15px rgba(255,255,255,0.8);
+            pointer-events: none; z-index: 300; opacity: 0; transition: 0.3s;
+        }
+
+        #shop-pointer-container {
+            position: absolute; top: 140px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center; pointer-events: none;
+            z-index: 20; transition: opacity 0.3s;
+        }
+        #shop-arrow {
+            width: 40px; height: 40px;
+            background-color: var(--neon-green);
+            clip-path: polygon(50% 0%, 100% 100%, 50% 80%, 0% 100%);
+            box-shadow: 0 0 15px var(--neon-green);
+        }
+        .pointer-label { font-size: 12px; color: var(--neon-green); margin-top: 8px; letter-spacing: 3px; font-weight: bold; text-shadow: 0 0 5px #000; }
+        
+        #boss-ui { 
+            position: absolute; top: 50px; left: 50%; transform: translateX(-50%); 
+            width: 600px; display: none; text-align: center; 
+        }
+        #boss-hp-bg { width: 100%; height: 20px; background: #222; border: 2px solid white; border-radius: 10px; overflow: hidden; }
+        #boss-hp-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #ff0000, #990000); transition: width 0.3s; }
+        #boss-name { color: white; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 4px; }
+        #boss-phase { color: var(--neon-red); font-size: 10px; margin-top: 5px; opacity: 0; transition: 0.5s; }
+
+        #admin-menu { border-color: var(--neon-gold); }
+        .admin-tag { color: var(--neon-gold); font-size: 10px; letter-spacing: 3px; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="damage-flash"></div>
+    <div id="boss-alert">¡ALERTA DE JEFE!</div>
+    <div id="skill-notify">HABILIDAD ESPECIAL</div>
+    
+    <div id="boss-ui">
+        <div id="boss-name">BOSS</div>
+        <div id="boss-hp-bg"><div id="boss-hp-fill"></div></div>
+        <div id="boss-phase">FASE 2: SOBRECARGA ACTIVADA</div>
+    </div>
+
+    <div id="start-screen" class="overlay">
+        <h1 style="font-size: 80px; color: var(--neon-green); margin: 0;">BLOCKZOID</h1>
+        <p style="letter-spacing: 8px; color: var(--neon-gold);">ULTRA TEXTURE EDITION</p>
+        <div style="width: 300px;"><button onclick="startGame()">INICIAR PROTOCOLO</button></div>
+    </div>
+
+    <div id="admin-menu" class="overlay" style="display:none;">
+        <div class="modal">
+            <span class="admin-tag">ACCESO DE SUPERVISOR</span>
+            <h2 style="color:var(--neon-gold); margin-top:5px;">CONSOLA ADMIN</h2>
+            
+            <div class="setting-row">
+                <label>SALTAR A OLEADA</label>
+                <input type="number" id="admin-wave-input" min="1" value="1">
+                <button onclick="adminJumpWave()" style="background:var(--neon-gold); color:black; margin-top:10px;">INICIAR OLEADA</button>
+            </div>
+
+            <div class="setting-row">
+                <label>CRÉDITOS INFINITOS</label>
+                <button id="btn-inf-money" onclick="adminToggleMoney()">DESACTIVADO</button>
+            </div>
+
+            <button onclick="toggleAdminMenu()" style="background:#333;">CERRAR [P]</button>
+        </div>
+    </div>
+
+    <div id="pause-menu" class="overlay" style="display:none;">
+        <div class="modal">
+            <h2 style="margin-top:0;">SISTEMA EN PAUSA</h2>
+            <div class="setting-row">
+                <label>DISTANCIA DE VISIÓN (POV)</label>
+                <input type="range" id="camera-dist" min="40" max="250" value="120" oninput="updateCameraDist(this.value)">
+            </div>
+            <button onclick="togglePause()">VOLVER</button>
+            <button class="btn-red" onclick="location.reload()">REINICIAR</button>
+        </div>
+    </div>
+
+    <div id="shop-menu" class="overlay" style="display:none;">
+        <div class="modal">
+            <h2 style="color:var(--neon-green); text-align:center; margin-top:0;">SUMINISTROS</h2>
+            <div style="background: rgba(46, 204, 113, 0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--neon-green);">
+                <span style="font-size: 14px; color: #888;">SALDO DISPONIBLE:</span>
+                <div style="font-size: 28px; color: var(--neon-green); font-weight: bold;">$<span id="shop-money-val">0</span></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span>MEDKIT ($60)</span> <button style="width:auto;" onclick="buy('hp', 60)">+ HP</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span>BALAS x50 ($50)</span> <button style="width:auto;" onclick="buy('ammo', 50)">AMMO</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div>DAÑO+ <small id="dmg-cost-label">($150)</small></div> 
+                <button style="width:auto;" onclick="buyUpgrade()">MEJORAR</button>
+            </div>
+            <button onclick="toggleShop(false)" style="background:#333;">CERRAR [ESC]</button>
+        </div>
+    </div>
+
+    <div id="game-over" class="overlay" style="display:none;">
+        <h1 style="color: var(--neon-red); font-size: 60px;">CONEXIÓN PERDIDA</h1>
+        <p id="final-stats">Oleadas sobrevividas: 0</p>
+        <div style="width: 300px;"><button onclick="location.reload()">RECONECTAR</button></div>
+    </div>
+
+    <div id="wave-timer">
+        <div style="color: var(--neon-gold); font-size: 14px;">PRÓXIMA INCURSIÓN:</div>
+        <div id="timer-val" style="font-size: 50px; font-weight: bold; color: white;">10</div>
+    </div>
+
+    <div id="shop-prompt">SISTEMA DE COMPRA CERCANO [E]</div>
+    <div id="shop-pointer-container" style="display:none;">
+        <div id="shop-arrow"></div>
+        <div class="pointer-label">TIENDA</div>
+    </div>
+
+    <div id="ui">
+        <div id="top-bar">
+            <div style="font-size: 24px;">OLA: <span id="wave-num" style="color:var(--neon-red)">1</span></div>
+            <div style="font-size: 24px;">CREDITOS: <span id="money-val" class="val" style="color:var(--neon-green)">0</span></div>
+        </div>
+        <div id="hud">
+            <div id="weapon-ui">
+                <div id="w1" class="weapon-slot active">1: PST-9</div>
+                <div id="w2" class="weapon-slot">2: SKG-12</div>
+                <div id="w3" class="weapon-slot">3: AR-15</div>
+            </div>
+            <div style="margin: 10px 0;"><span id="ammo-val" class="val" style="color:var(--neon-gold)">150</span> <small style="color: #888;">MAG</small></div>
+            <div class="bar-cont"><div id="hp-bar"></div></div>
+            <div class="bar-cont" style="height: 6px; margin-top: 5px;"><div id="stamina-bar"></div></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, player, clock, flashlight, auraLight, muzzleFlash;
+        let shops = [], zombies = [], bullets = [], houses = [], particles = [], keys = {};
+        
+        let hp = 100, maxHp = 100, stamina = 100, ammo = 150, money = 0, wave = 1;
+        let dmgBonus = 1, dmgUpgradeLevel = 0;
+        const BASE_DMG_UPGRADE_COST = 150;
+        
+        let isDead = false, isShopOpen = false, isPaused = false, isAdminOpen = false;
+        let lastShotTime = 0, isMouseDown = false, currentWep = 'pistola';
+        let waveActive = false, waveCountdown = 0, bossActive = false;
+        let infiniteMoney = false, waveInterval = null;
+        
+        let cameraHeight = 120;
+        const ARENA_RADIUS = 500;
+        const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
+
+        const ZOMBIE_TYPES = [
+            { name: "Veloz", color: "#e74c3c", skin: "#ff9999", speed: 45, hp: 15, scale: 0.8, dmgMult: 0.7 },
+            { name: "Tanque", color: "#2c3e50", skin: "#7f8c8d", speed: 18, hp: 60, scale: 1.5, dmgMult: 2.0 },
+            { name: "Mutante", color: "#2ecc71", skin: "#556655", speed: 28, hp: 25, scale: 1.1, dmgMult: 1.0 }
+        ];
+
+        const BOSS_DATA = {
+            5: { 
+                name: "NEON STALKER", color: 0x2ecc71, hp: 1500, scale: 2.2, speed: 45, 
+                attacks: ["plasma_cut", "charge_burst", "slow_dome", "clones", "laser_eye"],
+                modelType: "stalker"
+            },
+            10: { 
+                name: "VOID HULK", color: 0x9b59b6, hp: 4500, scale: 5.0, speed: 22, 
+                attacks: ["rock_throw", "void_pull", "earthquake", "void_shield", "agony_scream"],
+                modelType: "hulk"
+            },
+            15: { 
+                name: "PHANTOM KING", color: 0x3498db, hp: 8000, scale: 3.5, speed: 32, 
+                attacks: ["soul_rain", "desolation_beam", "ice_prison", "teleport_strike", "shadow_summon"],
+                modelType: "phantom"
+            }
+        };
+
+        function generateNoiseTexture(baseColor, isZombie = false, isBoss = false) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = baseColor; ctx.fillRect(0, 0, 128, 128);
+            
+            for(let i=0; i<500; i++) {
+                const opacity = isBoss ? 0.4 : (isZombie ? 0.3 : 0.15);
+                ctx.fillStyle = Math.random() > 0.5 ? `rgba(0,0,0,${opacity})` : `rgba(255,255,255,${opacity/2})`;
+                ctx.fillRect(Math.random()*128, Math.random()*128, Math.random()*10, Math.random()*10);
+            }
+            if(isBoss) {
+                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                ctx.lineWidth = 2;
+                for(let i=0; i<5; i++) { ctx.strokeRect(Math.random()*100, Math.random()*100, 20, 20); }
+            }
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            return tex;
+        }
+
+        function createParticles(pos, color, count = 10) {
+            for(let i=0; i<count; i++) {
+                const p = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({color: color}));
+                p.position.copy(pos);
+                p.userData = {
+                    v: new THREE.Vector3((Math.random()-0.5)*2, Math.random()*2, (Math.random()-0.5)*2),
+                    life: 1.0
+                };
+                particles.push(p);
+                scene.add(p);
+            }
+        }
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('ui').style.display = 'block';
+            document.getElementById('shop-pointer-container').style.display = 'flex';
+            init();
+        }
+
+        function toggleAdminMenu() {
+            if(isDead) return;
+            isAdminOpen = !isAdminOpen;
+            document.getElementById('admin-menu').style.display = isAdminOpen ? 'flex' : 'none';
+        }
+
+        function adminJumpWave() {
+            const targetWave = parseInt(document.getElementById('admin-wave-input').value);
+            if(isNaN(targetWave) || targetWave < 1) return;
+            if(waveInterval) { clearInterval(waveInterval); waveInterval = null; }
+            zombies.forEach(z => scene.remove(z));
+            zombies = [];
+            bossActive = false;
+            document.getElementById('boss-ui').style.display = 'none';
+            document.getElementById('boss-alert').style.display = 'none';
+            wave = targetWave;
+            toggleAdminMenu();
+            startWaveCycle();
+            updateUI();
+        }
+
+        function adminToggleMoney() {
+            infiniteMoney = !infiniteMoney;
+            const btn = document.getElementById('btn-inf-money');
+            btn.innerText = infiniteMoney ? "ACTIVADO" : "DESACTIVADO";
+            btn.style.background = infiniteMoney ? "var(--neon-green)" : "var(--neon-red)";
+        }
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x05070a);
+            scene.fog = new THREE.Fog(0x05070a, 40, 600);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 2000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0x4040ff, 0.4));
+            const moonLight = new THREE.DirectionalLight(0x3344ff, 0.3);
+            moonLight.position.set(-200, 300, -200); scene.add(moonLight);
+
+            flashlight = new THREE.SpotLight(0xffffff, 4, 400, Math.PI/5, 0.5);
+            scene.add(flashlight); scene.add(flashlight.target);
+            auraLight = new THREE.PointLight(0x2ecc71, 1.5, 60);
+            scene.add(auraLight);
+            muzzleFlash = new THREE.PointLight(0xffaa00, 0, 40);
+            scene.add(muzzleFlash);
+
+            const groundTex = createGroundTexture();
+            const grass = new THREE.Mesh(new THREE.CircleGeometry(ARENA_RADIUS, 64), new THREE.MeshPhongMaterial({ map: groundTex }));
+            grass.rotation.x = -Math.PI/2; scene.add(grass);
+            
+            const wallGeo = new THREE.CylinderGeometry(ARENA_RADIUS+5, ARENA_RADIUS+5, 40, 64, 1, true);
+            scene.add(new THREE.Mesh(wallGeo, new THREE.MeshPhongMaterial({ color: 0x111111, side: THREE.DoubleSide })));
+
+            for(let i=0; i<300; i++) {
+                const a = Math.random()*Math.PI*2, d = 50 + Math.random()*(ARENA_RADIUS - 100);
+                createPlant(Math.cos(a)*d, Math.sin(a)*d);
+            }
+
+            const shopPos = [{x:-30, z:20}, {x:350, z:350}, {x:-350, z:-350}, {x:350, z:-350}, {x:-350, z:350}];
+            shopPos.forEach(p => createShop(p.x, p.z));
+
+            player = createCharModel('#1a2533', '#ffdbac', false);
+            scene.add(player);
+
+            clock = new THREE.Clock();
+            
+            window.onkeydown = e => { 
+                const k = e.key.toLowerCase(); keys[k] = true; 
+                if(k === 'escape') handleEscape();
+                if(k === 'p') toggleAdminMenu();
+                if(!isPaused && !isShopOpen && !isAdminOpen) {
+                    if(k === '1') switchWeapon('pistola', 1);
+                    if(k === '2') switchWeapon('escopeta', 2);
+                    if(k === '3') switchWeapon('fusil', 3);
+                    if(k === 'e') tryOpenShop();
+                }
+            };
+            window.onkeyup = e => keys[e.key.toLowerCase()] = false;
+            window.onmousemove = e => { mouse.x = (e.clientX/window.innerWidth)*2-1; mouse.y = -(e.clientY/window.innerHeight)*2+1; };
+            window.onmousedown = () => { if(!isShopOpen && !isPaused && !isAdminOpen) { isMouseDown = true; if(currentWep !== 'fusil') shoot(); } };
+            window.onmouseup = () => isMouseDown = false;
+
+            updateUI();
+            startWaveCycle();
+            animate();
+        }
+
+        // NUEVO: Sistema de notificaciones visuales
+        function showSkillNotify(text, color) {
+            const el = document.getElementById('skill-notify');
+            el.innerText = text;
+            el.style.color = color;
+            el.style.opacity = '1';
+            el.style.textShadow = `0 0 20px ${color}`;
+            setTimeout(() => el.style.opacity = '0', 2000);
+        }
+
+        function createAOEIndicator(x, z, radius, duration, color = 0xff0000) {
+            const group = new THREE.Group();
+            const geo = new THREE.RingGeometry(radius - 0.5, radius, 32);
+            const mat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8 });
+            const ring = new THREE.Mesh(geo, mat); ring.rotation.x = -Math.PI/2;
+            
+            const internalGeo = new THREE.CircleGeometry(radius, 32);
+            const internalMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.2 });
+            const circle = new THREE.Mesh(internalGeo, internalMat); circle.rotation.x = -Math.PI/2;
+            circle.position.y = -0.01;
+
+            group.add(ring, circle);
+            group.position.set(x, 0.1, z);
+            scene.add(group);
+            
+            setTimeout(() => scene.remove(group), duration);
+        }
+
+        function updateBossAI(boss, delta) {
+            if (isPaused) return;
+            const data = boss.userData;
+            const dist = boss.position.distanceTo(player.position);
+            const now = Date.now();
+
+            // ANIMACIONES DE MOVIMIENTO SEGÚN TIPO
+            if(data.name === "NEON STALKER") {
+                boss.position.x += Math.sin(now * 0.01) * 0.2;
+                boss.rotation.z = Math.sin(now * 0.01) * 0.1;
+            } else if(data.name === "VOID HULK") {
+                boss.position.y = Math.abs(Math.sin(now * 0.005)) * 1.5;
+                if(now % 2000 < 50) createParticles(boss.position, 0x333333, 2);
+            } else if(data.name === "PHANTOM KING") {
+                boss.position.y = 5 + Math.sin(now * 0.003) * 3;
+                boss.rotation.y += 0.02;
+            }
+
+            // LÓGICA DE ATAQUES
+            if (!data.isAttacking && dist < 150) {
+                const availableAttacks = data.attackList.filter(atk => !data.cooldowns[atk] || now > data.cooldowns[atk]);
+                if (availableAttacks.length > 0) {
+                    const attack = availableAttacks[Math.floor(Math.random() * availableAttacks.length)];
+                    executeBossAttack(boss, attack);
+                    data.cooldowns[attack] = now + 6000 + (Math.random() * 4000);
+                }
+            }
+
+            if(!data.isAttacking) {
+                const moveSpeed = data.speed * delta;
+                const dir = new THREE.Vector3().subVectors(player.position, boss.position).normalize();
+                boss.position.add(dir.multiplyScalar(moveSpeed));
+            }
+        }
+
+        function executeBossAttack(boss, attackType) {
+            const data = boss.userData;
+            data.isAttacking = true;
+            const phaseMult = data.phase === 2 ? 0.7 : 1.0;
+            const cleanName = attackType.replace('_', ' ').toUpperCase();
+            
+            showSkillNotify(cleanName, '#' + data.color.toString(16).padStart(6, '0'));
+            createParticles(boss.position, data.color, 15);
+
+            // Animación de anticipación (Hinchado)
+            boss.scale.multiplyScalar(1.2);
+            setTimeout(() => boss.scale.multiplyScalar(0.83), 200);
+
+            switch(attackType) {
+                case "plasma_cut":
+                    createAOEIndicator(boss.position.x, boss.position.z, 15, 800 * phaseMult, 0x2ecc71);
+                    setTimeout(() => {
+                        if(player.position.distanceTo(boss.position) < 18) takeDamage(30);
+                        data.isAttacking = false;
+                    }, 800 * phaseMult);
+                    break;
+                case "charge_burst":
+                    createAOEIndicator(boss.position.x, boss.position.z, 25, 1200, 0x2ecc71);
+                    setTimeout(() => {
+                        createParticles(boss.position, 0xffffff, 40);
+                        if(player.position.distanceTo(boss.position) < 25) takeDamage(40);
+                        data.isAttacking = false;
+                    }, 1200);
+                    break;
+                case "slow_dome":
+                    const domePos = player.position.clone();
+                    createAOEIndicator(domePos.x, domePos.z, 30, 4000, 0xffff00);
+                    let slowInt = setInterval(() => {
+                        if(player.position.distanceTo(domePos) < 30) {
+                             createParticles(player.position, 0xffff00, 1);
+                        }
+                    }, 100);
+                    setTimeout(() => { clearInterval(slowInt); data.isAttacking = false; }, 4000);
+                    break;
+                case "clones":
+                    for(let i=0; i<2; i++){
+                        const clone = createBossModel({modelType:"stalker", color: 0x2ecc71});
+                        clone.position.copy(boss.position).x += (Math.random()-0.5)*20;
+                        scene.add(clone);
+                        setTimeout(() => scene.remove(clone), 3000);
+                    }
+                    data.isAttacking = false;
+                    break;
+                case "laser_eye":
+                    let duration = 3000;
+                    let laserInterval = setInterval(() => {
+                        if(player.position.distanceTo(boss.position) < 100) takeDamage(0.5);
+                    }, 50);
+                    setTimeout(() => { clearInterval(laserInterval); data.isAttacking = false; }, duration);
+                    break;
+                case "rock_throw":
+                    const rock = new THREE.Mesh(new THREE.BoxGeometry(4,4,4), new THREE.MeshPhongMaterial({color: 0x444444}));
+                    rock.position.copy(boss.position).y += 10;
+                    const rockTarget = player.position.clone();
+                    scene.add(rock);
+                    createAOEIndicator(rockTarget.x, rockTarget.z, 10, 1500, 0xff0000);
+                    setTimeout(() => {
+                        scene.remove(rock);
+                        if(player.position.distanceTo(rockTarget) < 12) takeDamage(50);
+                        data.isAttacking = false;
+                    }, 1500);
+                    break;
+                case "void_pull":
+                    createAOEIndicator(boss.position.x, boss.position.z, 60, 2000, 0x9b59b6);
+                    let pullInt = setInterval(() => {
+                        const pull = new THREE.Vector3().subVectors(boss.position, player.position).normalize().multiplyScalar(1.2);
+                        player.position.add(pull);
+                    }, 20);
+                    setTimeout(() => { clearInterval(pullInt); data.isAttacking = false; }, 2000);
+                    break;
+                case "earthquake":
+                    createAOEIndicator(boss.position.x, boss.position.z, 50, 2000, 0x9b59b6);
+                    setTimeout(() => {
+                        if(player.position.distanceTo(boss.position) < 50) takeDamage(45);
+                        data.isAttacking = false;
+                    }, 2000);
+                    break;
+                case "void_shield":
+                    boss.scale.multiplyScalar(1.2);
+                    setTimeout(() => { boss.scale.multiplyScalar(0.83); data.isAttacking = false; }, 3000);
+                    break;
+                case "agony_scream":
+                    createAOEIndicator(boss.position.x, boss.position.z, 70, 2500, 0xff0000);
+                    setTimeout(() => {
+                        if(player.position.distanceTo(boss.position) < 70) takeDamage(60);
+                        data.isAttacking = false;
+                    }, 2500);
+                    break;
+                case "soul_rain":
+                    for(let i=0; i<8; i++){
+                        const rx = player.position.x + (Math.random()-0.5)*60;
+                        const rz = player.position.z + (Math.random()-0.5)*60;
+                        createAOEIndicator(rx, rz, 8, 1500, 0x3498db);
+                        setTimeout(() => {
+                            if(player.position.distanceTo(new THREE.Vector3(rx, 0, rz)) < 8) takeDamage(25);
+                        }, 1500);
+                    }
+                    setTimeout(() => data.isAttacking = false, 1500);
+                    break;
+                case "desolation_beam":
+                    createAOEIndicator(boss.position.x, boss.position.z, 100, 4000, 0x3498db);
+                    let beamInt = setInterval(() => {
+                        if(player.position.distanceTo(boss.position) < 100) takeDamage(0.8);
+                    }, 100);
+                    setTimeout(() => { clearInterval(beamInt); data.isAttacking = false; }, 4000);
+                    break;
+                case "ice_prison":
+                    const pPos = player.position.clone();
+                    createAOEIndicator(pPos.x, pPos.z, 12, 1800, 0x00ffff);
+                    setTimeout(() => {
+                        if(player.position.distanceTo(pPos) < 12) takeDamage(15);
+                        data.isAttacking = false;
+                    }, 1800);
+                    break;
+                case "teleport_strike":
+                    boss.visible = false;
+                    setTimeout(() => {
+                        boss.position.set(player.position.x + 10, 0, player.position.z + 10);
+                        boss.visible = true;
+                        createAOEIndicator(boss.position.x, boss.position.z, 20, 500, 0xffffff);
+                        setTimeout(() => {
+                            if(player.position.distanceTo(boss.position) < 20) takeDamage(35);
+                            data.isAttacking = false;
+                        }, 500);
+                    }, 1000);
+                    break;
+                case "shadow_summon":
+                    for(let i=0; i<3; i++){
+                        const z = createCharModel(0x3498db, 0x3498db, true);
+                        z.position.copy(boss.position).x += (Math.random()-0.5)*15;
+                        z.userData = { hp: 1, maxHp: 1, speed: 60, dmgMult: 0.5, isBoss: false };
+                        zombies.push(z); scene.add(z);
+                    }
+                    data.isAttacking = false;
+                    break;
+                default: data.isAttacking = false; break;
+            }
+        }
+
+        function createBossModel(data) {
+            const g = new THREE.Group();
+            const mat = new THREE.MeshPhongMaterial({ 
+                map: generateNoiseTexture('#' + data.color.toString(16), true, true),
+                emissive: data.color,
+                emissiveIntensity: 0.3
+            });
+
+            if(data.modelType === "stalker") {
+                const body = new THREE.Mesh(new THREE.OctahedronGeometry(1), mat);
+                body.scale.set(1, 2, 1); body.position.y = 2; g.add(body);
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), mat);
+                head.position.y = 4; g.add(head);
+            } else if(data.modelType === "hulk") {
+                const body = new THREE.Mesh(new THREE.BoxGeometry(2, 2.5, 1.5), mat);
+                body.position.y = 1.25; g.add(body);
+                const armL = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3, 0.8), mat);
+                armL.position.set(-1.5, 1.5, 0.5); g.add(armL);
+                const armR = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3, 0.8), mat);
+                armR.position.set(1.5, 1.5, 0.5); g.add(armR);
+            } else {
+                const body = new THREE.Mesh(new THREE.IcosahedronGeometry(1.2, 0), mat);
+                body.position.y = 3; g.add(body);
+                const ringGeo = new THREE.TorusGeometry(2, 0.1, 8, 24);
+                const ring = new THREE.Mesh(ringGeo, mat);
+                ring.rotation.x = Math.PI/2; ring.position.y = 3;
+                g.add(ring);
+            }
+
+            const eyeGeo = new THREE.SphereGeometry(0.2, 8, 8);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const e1 = new THREE.Mesh(eyeGeo, eyeMat); e1.position.set(0.4, 3.5, 0.8); g.add(e1);
+            const e2 = new THREE.Mesh(eyeGeo, eyeMat); e2.position.set(-0.4, 3.5, 0.8); g.add(e2);
+            return g;
+        }
+
+        function spawnWave() {
+            waveActive = true;
+            const data = BOSS_DATA[wave];
+            
+            if(data) {
+                bossActive = true;
+                document.getElementById('boss-alert').innerHTML = `OLA ${wave}<br><span style="font-size:60px">${data.name}</span>`;
+                document.getElementById('boss-alert').style.display = 'block';
+                setTimeout(() => document.getElementById('boss-alert').style.display = 'none', 4000);
+                
+                const b = createBossModel(data);
+                b.scale.set(data.scale, data.scale, data.scale);
+                const a = Math.random()*Math.PI*2;
+                b.position.set(player.position.x + Math.cos(a)*180, 0, player.position.z + Math.sin(a)*180);
+                
+                b.userData = { 
+                    hp: data.hp, maxHp: data.hp, speed: data.speed, 
+                    isBoss: true, name: data.name, attackList: data.attacks,
+                    isAttacking: false, phase: 1, color: data.color, cooldowns: {}
+                };
+                
+                zombies.push(b); scene.add(b);
+                document.getElementById('boss-ui').style.display = 'block';
+                document.getElementById('boss-name').innerText = data.name;
+                document.getElementById('boss-phase').style.opacity = 0;
+                updateBossUI(b);
+            } else {
+                let count = 10 + wave * 5;
+                for(let i=0; i<count; i++) {
+                    const type = ZOMBIE_TYPES[Math.floor(Math.random() * ZOMBIE_TYPES.length)];
+                    const z = createCharModel(type.color, type.skin, true);
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 140 + Math.random() * 60;
+                    z.position.set(player.position.x + Math.cos(angle)*dist, 0, player.position.z + Math.sin(angle)*dist);
+                    z.scale.set(type.scale, type.scale, type.scale);
+                    const waveMult = 1 + (wave * 0.15);
+                    z.userData = { 
+                        hp: type.hp * waveMult, 
+                        maxHp: type.hp * waveMult, 
+                        speed: type.speed + (wave * 0.5), 
+                        dmgMult: type.dmgMult, 
+                        isBoss: false,
+                        type: type.name 
+                    };
+                    updateZombieHP(z); zombies.push(z); scene.add(z);
+                }
+            }
+            updateUI();
+        }
+
+        function takeDamage(amount) {
+            if(isDead) return;
+            hp -= amount;
+            document.getElementById('damage-flash').style.opacity = 1;
+            setTimeout(() => document.getElementById('damage-flash').style.opacity = 0, 100);
+            updateUI();
+            if(hp <= 0 && !isDead) {
+                isDead = true;
+                document.getElementById('game-over').style.display = 'flex';
+                document.getElementById('final-stats').innerText = `Oleadas sobrevividas: ${wave-1}`;
+            }
+        }
+
+        function createGroundTexture() {
+            const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
+            const ctx = canvas.getContext('2d'); ctx.fillStyle = '#080a0f'; ctx.fillRect(0,0,512,512);
+            for(let i=0; i<3000; i++) {
+                ctx.fillStyle = `rgba(46, 204, 113, ${Math.random()*0.15})`;
+                ctx.fillRect(Math.random()*512, Math.random()*512, 2, 2);
+            }
+            const t = new THREE.CanvasTexture(canvas); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(40,40);
+            return t;
+        }
+
+        function createShop(x, z) {
+            let g = new THREE.Group();
+            g.add(new THREE.Mesh(new THREE.BoxGeometry(8,4,4), new THREE.MeshPhongMaterial({color: 0x111})));
+            let l = new THREE.Mesh(new THREE.BoxGeometry(8.2,1,4.2), new THREE.MeshPhongMaterial({color: 0x2ecc71, emissive: 0x2ecc71, emissiveIntensity: 0.5}));
+            l.position.y = 2.5; g.add(l);
+            g.position.set(x, 0, z); scene.add(g); shops.push(g);
+        }
+
+        function createPlant(x, z) {
+            const g = new THREE.Group();
+            const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.8, 5), new THREE.MeshPhongMaterial({color: 0x050505}));
+            const lf = new THREE.Mesh(new THREE.IcosahedronGeometry(3), new THREE.MeshPhongMaterial({color: 0x0a1a0a}));
+            lf.position.y = 4; g.add(tr, lf); g.position.set(x, 0, z); scene.add(g);
+        }
+
+        function createCharModel(color, skin, isZombie) {
+            const g = new THREE.Group();
+            const bodyMat = new THREE.MeshPhongMaterial({ map: generateNoiseTexture(color, isZombie) });
+            const skinMat = new THREE.MeshPhongMaterial({ map: generateNoiseTexture(skin, isZombie) });
+
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2, 1), bodyMat);
+            torso.position.y = 2; g.add(torso);
+
+            const head = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), skinMat);
+            head.position.y = 1.6; torso.add(head);
+
+            if(isZombie) {
+                const eyeGeo = new THREE.SphereGeometry(0.15, 8, 8);
+                const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                const eyeL = new THREE.Mesh(eyeGeo, eyeMat); eyeL.position.set(-0.3, 0.1, 0.5); head.add(eyeL);
+                const eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set(0.3, 0.1, 0.5); head.add(eyeR);
+                const armG = new THREE.BoxGeometry(0.5, 0.5, 1.5);
+                const lA = new THREE.Mesh(armG, skinMat); lA.position.set(-1, 0.5, 0.8); torso.add(lA);
+                const rA = new THREE.Mesh(armG, skinMat); rA.position.set(1, 0.5, 0.8); torso.add(rA);
+                g.arms = [lA, rA];
+                
+                const canvas = document.createElement('canvas'); canvas.width = 64; canvas.height = 8;
+                const tex = new THREE.CanvasTexture(canvas);
+                const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: tex, depthTest: false}));
+                sprite.scale.set(4, 0.5, 1); sprite.position.y = 5;
+                sprite.userData = { ctx: canvas.getContext('2d'), tex: tex };
+                g.add(sprite); g.hpBar = sprite;
+            } else {
+                const armG = new THREE.BoxGeometry(0.4, 1.2, 0.4);
+                const lA = new THREE.Mesh(armG, skinMat); lA.position.set(-1, 0, 0); torso.add(lA);
+                const rA = new THREE.Mesh(armG, skinMat); rA.position.set(1, 0, 0); torso.add(rA);
+                g.arms = [lA, rA];
+            }
+
+            const gr = new THREE.Group(); gr.position.set(0.8, 0, 0.8); torso.add(gr);
+            g.gunRoot = gr; 
+            g.torso = torso;
+            if(!isZombie) updateWeaponVisual(g);
+            return g;
+        }
+
+        function updateWeaponVisual(char) {
+            char.gunRoot.clear();
+            let geo = currentWep === 'pistola' ? [0.4, 0.6, 1.2] : (currentWep === 'escopeta' ? [0.6, 0.5, 2.2] : [0.4, 0.6, 2.8]);
+            const gunMat = new THREE.MeshPhongMaterial({ color: 0x111111, shininess: 100 });
+            char.gunRoot.add(new THREE.Mesh(new THREE.BoxGeometry(...geo), gunMat));
+        }
+
+        function switchWeapon(type, slot) {
+            currentWep = type;
+            document.querySelectorAll('.weapon-slot').forEach(s => s.classList.remove('active'));
+            document.getElementById('w'+slot).classList.add('active');
+            updateWeaponVisual(player);
+        }
+
+        function updateZombieHP(z) {
+            if(!z.hpBar) return;
+            const u = z.hpBar.userData;
+            u.ctx.fillStyle = '#444'; u.ctx.fillRect(0,0,64,8);
+            u.ctx.fillStyle = '#e74c3c'; u.ctx.fillRect(0,0, (z.userData.hp/z.userData.maxHp)*64, 8);
+            u.tex.needsUpdate = true;
+        }
+
+        function updateBossUI(b) {
+            document.getElementById('boss-hp-fill').style.width = (b.userData.hp / b.userData.maxHp) * 100 + "%";
+            if(b.userData.hp <= b.userData.maxHp * 0.5 && b.userData.phase === 1) {
+                b.userData.phase = 2;
+                b.userData.speed *= 1.4;
+                document.getElementById('boss-phase').style.opacity = 1;
+                showSkillNotify("SOBRECARGA: FASE 2", "#ff0000");
+                createParticles(b.position, 0xff0000, 50);
+            }
+        }
+
+        function updateUI() {
+            if(infiniteMoney) money = 1000000;
+            document.getElementById('hp-bar').style.width = (hp/maxHp)*100 + "%";
+            document.getElementById('ammo-val').innerText = ammo;
+            document.getElementById('money-val').innerText = money;
+            document.getElementById('shop-money-val').innerText = money;
+            document.getElementById('wave-num').innerText = wave;
+        }
+
+        function startWaveCycle() {
+            waveActive = false; waveCountdown = 10;
+            document.getElementById('wave-timer').style.display = 'block';
+            document.getElementById('timer-val').innerText = waveCountdown;
+            if(waveInterval) clearInterval(waveInterval);
+            waveInterval = setInterval(() => {
+                if(isPaused || isAdminOpen) return;
+                waveCountdown--;
+                document.getElementById('timer-val').innerText = waveCountdown;
+                if(waveCountdown <= 0) { 
+                    clearInterval(waveInterval); 
+                    waveInterval = null;
+                    document.getElementById('wave-timer').style.display = 'none'; 
+                    spawnWave(); 
+                }
+            }, 1000);
+        }
+
+        function shoot() {
+            if(ammo <= 0 || isDead || isPaused || isShopOpen || isAdminOpen) return;
+            const now = Date.now();
+            let delay = currentWep === 'fusil' ? 120 : (currentWep === 'escopeta' ? 900 : 300);
+            if(now - lastShotTime < delay) return;
+            lastShotTime = now;
+            
+            muzzleFlash.intensity = 15; muzzleFlash.position.copy(player.position).y += 2;
+            setTimeout(() => muzzleFlash.intensity = 0, 50);
+
+            const target = new THREE.Vector3();
+            raycaster.setFromCamera(mouse, camera);
+            raycaster.ray.intersectPlane(groundPlane, target);
+            const dir = target.clone().sub(player.position).normalize();
+            
+            const count = currentWep === 'escopeta' ? 8 : 1;
+            for(let i=0; i<count; i++) {
+                const b = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), new THREE.MeshBasicMaterial({color: 0xffea00}));
+                b.position.copy(player.position).y = 2.2;
+                let fDir = dir.clone();
+                if(currentWep === 'escopeta') { fDir.x += (Math.random()-0.5)*0.4; fDir.z += (Math.random()-0.5)*0.4; }
+                b.userData = { v: fDir.multiplyScalar(7.5), life: 100, dmg: (currentWep==='escopeta'?4:12) * dmgBonus };
+                bullets.push(b); scene.add(b);
+            }
+            ammo--; updateUI();
+        }
+
+        function applyDamage(z, dmg) {
+            z.userData.hp -= dmg;
+            if(z.userData.isBoss) updateBossUI(z);
+            else if(z.hpBar) updateZombieHP(z);
+            
+            if(z.userData.hp <= 0) {
+                createParticles(z.position, z.userData.isBoss ? 0xffea00 : 0xff0000, 20);
+                if(z.userData.isBoss) { 
+                    money += 2000; bossActive = false; 
+                    document.getElementById('boss-ui').style.display = 'none'; 
+                } else { money += 20; }
+                scene.remove(z); zombies.splice(zombies.indexOf(z), 1);
+                updateUI();
+                if(zombies.length === 0 && waveActive) { wave++; startWaveCycle(); }
+            }
+        }
+
+        function buy(type, price) {
+            if(money >= price) {
+                if(!infiniteMoney) money -= price;
+                if(type === 'hp') hp = Math.min(maxHp, hp + 50);
+                if(type === 'ammo') ammo += 50;
+                updateUI();
+            }
+        }
+
+        function buyUpgrade() {
+            let cost = BASE_DMG_UPGRADE_COST + (dmgUpgradeLevel * 200);
+            if(money >= cost) {
+                if(!infiniteMoney) money -= cost; 
+                dmgBonus += 0.4; dmgUpgradeLevel++;
+                document.getElementById('dmg-cost-label').innerText = `($${BASE_DMG_UPGRADE_COST + (dmgUpgradeLevel * 200)})`;
+                updateUI();
+            }
+        }
+
+        function handleEscape() { 
+            if(isAdminOpen) toggleAdminMenu();
+            else if(isShopOpen) toggleShop(false); 
+            else togglePause(); 
+        }
+        function togglePause() { isPaused = !isPaused; document.getElementById('pause-menu').style.display = isPaused ? 'flex' : 'none'; }
+        function toggleShop(open) { isShopOpen = open; document.getElementById('shop-menu').style.display = open ? 'flex' : 'none'; }
+
+        function checkNearShop() {
+            let near = false;
+            shops.forEach(s => { if(player.position.distanceTo(s.position) < 20) near = true; });
+            document.getElementById('shop-prompt').style.display = near ? 'block' : 'none';
+            return near;
+        }
+
+        function tryOpenShop() { if(checkNearShop()) toggleShop(true); }
+
+        function updateShopPointer() {
+            if(shops.length === 0) return;
+            let closest = shops[0];
+            let minDist = player.position.distanceTo(closest.position);
+            shops.forEach(s => { let d = player.position.distanceTo(s.position); if(d < minDist) { minDist = d; closest = s; } });
+            const cont = document.getElementById('shop-pointer-container');
+            if(minDist < 40) cont.style.opacity = '0';
+            else {
+                cont.style.opacity = '1';
+                const vector = closest.position.clone().project(camera);
+                const x = (vector.x * .5 + .5) * window.innerWidth;
+                const y = (-(vector.y * .5) + .5) * window.innerHeight;
+                const angle = Math.atan2(y - window.innerHeight/2, x - window.innerWidth/2);
+                document.getElementById('shop-arrow').style.transform = `rotate(${angle + Math.PI/2}rad)`;
+            }
+        }
+
+        function animate() {
+            if(isDead) return;
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            const time = Date.now() * 0.005;
+
+            if(!isPaused && !isShopOpen && !isAdminOpen) {
+                let isMoving = keys['w'] || keys['s'] || keys['a'] || keys['d'];
+                let isRunning = keys['shift'] && stamina > 0;
+                let speed = isRunning ? 80 : 50;
+                
+                stamina = (isRunning && isMoving) ? Math.max(0, stamina - 50*delta) : Math.min(100, stamina + 30*delta);
+                document.getElementById('stamina-bar').style.width = Math.min(100, stamina) + "%";
+
+                // ANIMACIÓN JUGADOR (Bobbing)
+                if(isMoving) {
+                    let freq = isRunning ? 15 : 10;
+                    let amp = isRunning ? 0.4 : 0.2;
+                    player.torso.position.y = 2 + Math.sin(time * freq) * amp;
+                    player.arms[0].rotation.x = Math.sin(time * freq) * 0.5;
+                    // El brazo derecho (arma) se mueve menos para apuntar mejor
+                    player.arms[1].rotation.x = Math.sin(time * freq) * 0.2;
+                } else {
+                    player.torso.position.y = 2 + Math.sin(time * 2) * 0.05; // Respiración
+                }
+
+                let mx = 0, mz = 0;
+                if(keys['w']) mz -= 1; if(keys['s']) mz += 1;
+                if(keys['a']) mx -= 1; if(keys['d']) mx += 1;
+                if(mx !== 0 || mz !== 0) {
+                    const moveDir = new THREE.Vector3(mx, 0, mz).normalize().multiplyScalar(speed * delta);
+                    player.position.add(moveDir);
+                    if(player.position.length() > ARENA_RADIUS-10) player.position.setLength(ARENA_RADIUS-10);
+                }
+
+                raycaster.setFromCamera(mouse, camera);
+                const target = new THREE.Vector3(); raycaster.ray.intersectPlane(groundPlane, target);
+                player.lookAt(target.x, 0, target.z);
+                if(isMouseDown && currentWep === 'fusil') shoot();
+
+                // ANIMACIÓN ZOMBIES Y LÓGICA
+                zombies.forEach(z => {
+                    if(z.userData.isBoss) {
+                        updateBossAI(z, delta);
+                    } else {
+                        z.lookAt(player.position.x, 0, player.position.z);
+                        const moveSpeed = z.userData.speed * delta;
+                        const dir = new THREE.Vector3().subVectors(player.position, z.position).normalize();
+                        z.position.add(dir.multiplyScalar(moveSpeed));
+
+                        // Animación específica por tipo
+                        let zTime = time + z.id; // Offset por zombie
+                        if(z.userData.type === "Veloz") {
+                            z.torso.position.y = 2 + Math.sin(zTime * 20) * 0.5;
+                            z.torso.rotation.z = Math.sin(zTime * 20) * 0.1;
+                        } else if(z.userData.type === "Tanque") {
+                            z.torso.position.y = 2 + Math.abs(Math.sin(zTime * 5)) * 0.3;
+                        } else {
+                            z.torso.position.y = 2 + Math.sin(zTime * 10) * 0.2;
+                        }
+                        // Movimiento de brazos agresivo
+                        z.arms.forEach((arm, i) => {
+                            arm.rotation.x = Math.PI/2 + Math.sin(zTime * 10 + i) * 0.3;
+                        });
+                    }
+                    if(z.position.distanceTo(player.position) < 8) takeDamage((z.userData.dmgMult || 1) * 30 * delta);
+                });
+
+                // PROCESAR BALAS
+                for(let i=bullets.length-1; i>=0; i--) {
+                    const b = bullets[i]; b.position.add(b.userData.v);
+                    let hit = false;
+                    zombies.forEach(z => { 
+                        let hitDist = z.userData.isBoss ? 15 : 10;
+                        if(!hit && b.position.distanceTo(z.position) < hitDist) { applyDamage(z, b.userData.dmg); hit = true; } 
+                    });
+                    if(hit || b.position.length() > ARENA_RADIUS) { scene.remove(b); bullets.splice(i, 1); }
+                }
+
+                // PROCESAR PARTÍCULAS
+                for(let i=particles.length-1; i>=0; i--) {
+                    const p = particles[i];
+                    p.position.add(p.userData.v);
+                    p.userData.life -= delta;
+                    p.scale.multiplyScalar(0.95);
+                    if(p.userData.life <= 0) { scene.remove(p); particles.splice(i, 1); }
+                }
+
+                flashlight.position.copy(player.position).y += 4;
+                const fTarget = player.position.clone().add(new THREE.Vector3(0,0,1).applyQuaternion(player.quaternion).multiplyScalar(50));
+                flashlight.target.position.copy(fTarget);
+                auraLight.position.copy(player.position).y += 5;
+                camera.position.set(player.position.x, player.position.y + cameraHeight, player.position.z + cameraHeight/1.5);
+                camera.lookAt(player.position);
+                updateShopPointer();
+                checkNearShop();
+            }
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>

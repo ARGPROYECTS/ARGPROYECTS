@@ -1,345 +1,61 @@
-/* Importar las variables base de styles.css para usar los colores */
-@import url("styles.css"); 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARGProyects - Menú Principal</title>
+    <link rel="stylesheet" href="menu_principal.css"> 
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="menu-background">
+        <div class="overlay"></div>
+        
+        <div id="title-container">
+            <h1 class="title-glow">ARGPROYECTS</h1> 
+            <h2 class="subtitle">TOXIC GAMES PRODUCTIONS</h2>
+        </div>
+        
+        <div id="main-menu">
+            <div class="button-group">
+                <button id="startButton" class="btn-start btn-animated">
+                    VAMOS A JUGAR
+                </button>
+                
+                <a href="#" id="open-mode-btn" class="btn-secondary">
+                    MODO DE JUEGO
+                </a>
+            </div>
+            
+        </div>
+        
+        <footer id="signature">
+            Hecho por Alvaro Restrepo
+        </footer>
+    </div>
 
-/* 1. ESTILOS GLOBALES Y KEYFRAMES */
+    <div id="mode-modal" class="modal-container">
+        <div class="modal-content">
+            
+            <button id="close-mode-btn" class="close-btn">&times;</button>
+            
+            <h3 class="modal-title">Selecciona el Modo de Juego</h3>
 
-body {
-    font-family: 'Montserrat', sans-serif;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    background-color: var(--COLOR_BACKGROUND, #121212);
-    color: var(--COLOR_TEXT, #f4f4f4);
-}
+            <div class="mode-options">
+                <button id="blockzoid-btn" class="mode-btn btn-blockzoid">
+                    BLOCKZOID V2.6
+                </button>
 
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        box-shadow: 0 0 0 rgba(76, 175, 80, 0.5);
-    }
-    70% {
-        transform: scale(1.02);
-        box-shadow: 0 0 15px rgba(76, 175, 80, 0.9), 0 0 25px rgba(76, 175, 80, 0.6);
-    }
-    100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 rgba(76, 175, 80, 0.5);
-    }
-}
-
-/* ========================================= */
-/* 2. ESTRUCTURA PRINCIPAL Y CENTRADO (PC) */
-/* ========================================= */
-
-#menu-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    /* Centrado global de la interfaz */
-    display: flex;
-    flex-direction: column; 
-    justify-content: center;
-    align-items: center;
-}
-
-.overlay {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6); 
-    backdrop-filter: blur(3px); 
-}
-
-/* ========================================= */
-/* 3. ESTILOS DE TÍTULO (ARGPROYECTS) */
-/* ========================================= */
-
-#title-container {
-    position: relative;
-    z-index: 10;
-    text-align: center;
-    margin-bottom: 30px; /* Espacio PC entre título y menú */
-    padding: 0 20px;
-}
-
-.title-glow {
-    font-size: 5.5em; /* Tamaño grande para PC */
-    font-weight: 900;
-    color: white; 
-    margin: 0;
-    text-shadow: 0 0 15px rgba(255, 193, 7, 1), 0 0 25px rgba(255, 193, 7, 0.8);
-    line-height: 1;
-    letter-spacing: 2px;
-}
-
-.subtitle {
-    font-size: 1.2em;
-    font-weight: 400;
-    color: var(--COLOR_ACCENT, #FFC107);
-    margin-top: 5px;
-    margin-bottom: 0;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-}
-
-/* ========================================= */
-/* 4. ESTILOS DEL RECUADRO DEL MENÚ */
-/* ========================================= */
-
-#main-menu {
-    position: relative;
-    z-index: 10;
-    background-color: rgba(30, 30, 30, 0.95);
-    padding: 30px 50px; 
-    border-radius: 15px;
-    text-align: center;
-    max-width: 450px; 
-    width: 90%; 
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-    border: 1px solid #333;
-}
-
-.button-group {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin: 0; 
-}
-
-.btn-start, .btn-secondary {
-    display: block;
-    padding: 18px 30px;
-    border-radius: 10px;
-    text-decoration: none;
-    font-weight: bold;
-    text-transform: uppercase;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    text-align: center;
-    font-size: 1.4em;
-}
-
-.btn-start {
-    background-color: var(--COLOR_EXITO, #4CAF50);
-    color: var(--COLOR_BACKGROUND, #121212);
-    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.5);
-}
-
-.btn-animated {
-    animation: pulse 2s infinite ease-in-out;
-}
-
-.btn-start:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.7);
-}
-
-.btn-secondary {
-    background-color: transparent;
-    color: var(--COLOR_ACCENT, #FFC107);
-    border: 2px solid var(--COLOR_ACCENT, #FFC107);
-    padding: 15px 30px;
-    font-size: 1.1em;
-}
-
-.btn-secondary:hover {
-    background-color: var(--COLOR_ACCENT, #FFC107);
-    color: var(--COLOR_BACKGROUND, #121212);
-    box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
-    transform: translateY(-1px);
-}
-
-/* ========================================= */
-/* 5. ESTILOS DE LA FIRMA (FOOTER) */
-/* ========================================= */
-
-#signature {
-    position: fixed; 
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%); 
-    z-index: 50; 
-    font-size: 0.85em;
-    color: #666; 
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    padding: 5px 10px;
-    background-color: rgba(30, 30, 30, 0.5); 
-    border-radius: 5px;
-}
-
-
-/* ========================================= */
-/* 6. ESTILOS DEL MODAL (MODO DE JUEGO) */
-/* ========================================= */
-
-.modal-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 100;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.modal-container.active {
-    opacity: 1;
-    visibility: visible;
-}
-
-.modal-content {
-    background-color: #1e1e1e;
-    padding: 30px;
-    border-radius: 15px;
-    max-width: 600px;
-    width: 90%;
-    position: relative;
-    transform: scale(0.8); 
-    opacity: 0;
-    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-}
-
-.modal-container.active .modal-content {
-    transform: scale(1);
-    opacity: 1;
-}
-
-.modal-title {
-    font-size: 2em;
-    color: var(--COLOR_ACCENT, #e50050);
-    margin-bottom: 25px; 
-    border-bottom: 2px solid var(--COLOR_ACCENT, #e50050);
-    padding-bottom: 10px;
-    text-transform: uppercase;
-    text-align: center;
-}
-
-.mode-options {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.mode-btn {
-    display: block;
-    width: 100%;
-    padding: 15px 25px;
-    border-radius: 8px;
-    font-weight: 700;
-    text-transform: uppercase;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    font-size: 1.2em;
-    text-align: center;
-}
-
-.btn-primary-mode {
-    background-color: var(--COLOR_EXITO, #4CAF50);
-    color: var(--COLOR_BACKGROUND, #121212);
-}
-
-.btn-primary-mode:hover {
-    background-color: #45a049;
-    box-shadow: 0 0 10px rgba(76, 175, 80, 0.7);
-}
-
-.btn-secondary-mode {
-    background-color: #444; 
-    color: #999;
-    cursor: not-allowed;
-    position: relative;
-}
-
-.btn-secondary-mode:hover {
-    background-color: #444; 
-}
-
-.btn-secondary-mode span {
-    display: block;
-    font-size: 0.7em;
-    font-weight: 400;
-    color: var(--COLOR_PELIGRO, #E53935); 
-    margin-top: 5px;
-}
-
-.close-btn {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    background: transparent;
-    color: var(--COLOR_ACCENT, #e50050);
-    font-size: 2em;
-    border: none;
-    cursor: pointer;
-    line-height: 1;
-    padding: 5px;
-    transition: color 0.2s;
-}
-
-.close-btn:hover {
-    color: var(--COLOR_PELIGRO);
-}
-
-/* ========================================================== */
-/* 7. MEDIA QUERIES (RESPONSIVE) - AJUSTES PARA CELULARES 📱 */
-/* ========================================================== */
-@media screen and (max-width: 650px) {
-    
-    /* Título principal */
-    .title-glow {
-        font-size: 3em; /* Reducción para caber mejor en móviles */
-    }
-    .subtitle {
-        font-size: 1em;
-        letter-spacing: 2px;
-    }
-    #title-container {
-        margin-bottom: 25px; /* Espacio móvil entre título y menú */
-    }
-
-    /* Menú principal */
-    #main-menu {
-        padding: 30px 20px; 
-        max-width: 95%; 
-        width: 95%;
-    }
-    
-    /* Botones más legibles */
-    .btn-start {
-        font-size: 1.1em; 
-        padding: 14px 25px;
-    }
-    
-    .btn-secondary {
-        font-size: 0.9em;
-        padding: 12px 20px;
-    }
-
-    /* Modal */
-    .modal-content {
-        padding: 20px;
-    }
-    .modal-title {
-        font-size: 1.5em;
-    }
-    .mode-btn {
-        font-size: 1em;
-        padding: 12px 20px;
-    }
-
-    /* Firma */
-    #signature {
-        font-size: 0.75em;
-        bottom: 5px;
-    }
-}
+                <button id="supervivencia-btn" class="mode-btn btn-primary-mode">
+                    MODO SUPERVIVENCIA
+                </button>
+                
+                <button id="destruccion-btn" class="mode-btn btn-secondary-mode">
+                    MODO DESTRUCCIÓN <span>(En producción)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
