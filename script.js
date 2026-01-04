@@ -1,66 +1,48 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Referencias a elementos del DOM
-    const startButton = document.getElementById('startButton'); // VAMOS A JUGAR
-    const modeButton = document.getElementById('open-mode-btn'); // MODO DE JUEGO
+    // Referencias a los botones principales
+    const startButton = document.getElementById('startButton'); 
+    const modeButton = document.getElementById('open-mode-btn'); 
+    const directBlockzoidBtn = document.getElementById('direct-blockzoid-btn');
     
     // Referencias al modal
-    const closeButton = document.getElementById('close-mode-btn');
     const modal = document.getElementById('mode-modal'); 
+    const closeButton = document.getElementById('close-mode-btn');
 
-    // Botones de modo de juego dentro del modal
-    const blockzoidBtn = document.getElementById('blockzoid-btn'); // NUEVO
+    // Botones dentro del modal
+    const blockzoidBtn = document.getElementById('blockzoid-btn'); 
     const supervivenciaBtn = document.getElementById('supervivencia-btn');
     const destruccionBtn = document.getElementById('destruccion-btn');
 
-    // Función para mostrar el modal
-    function openModal() {
-        modal.classList.add('active');
-    }
+    // Funciones de control del Modal
+    const openModal = () => modal.classList.add('active');
+    const closeModal = () => modal.classList.remove('active');
 
-    // Función para ocultar el modal
-    function closeModal() {
-        modal.classList.remove('active');
-    }
-
-    // 1. Ambos botones principales abren el modal de selección de modo
+    // Eventos de interfaz
     startButton.addEventListener('click', openModal);
-
     modeButton.addEventListener('click', (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         openModal();
     });
 
-    // 2. Lógica para cerrar el modal
     closeButton.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal();
-        }
-    });
+    // LÓGICA DE NAVEGACIÓN (Corregida para GitHub)
+    const playBlockzoid = () => {
+        console.log("Cargando Blockzoid_v2.6.html...");
+        window.location.href = 'Blockzoid_v2.6.html';
+    };
 
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('active')) {
-            closeModal();
-        }
-    });
+    // Ambos botones ejecutan la misma función
+    directBlockzoidBtn.addEventListener('click', playBlockzoid);
+    blockzoidBtn.addEventListener('click', playBlockzoid);
 
-    // 3. LÓGICA DE LOS BOTONES DE MODO DE JUEGO
-
-    // Botón BLOCKZOID v2.6
-    blockzoidBtn.addEventListener('click', () => {
-        console.log("Iniciando BLOCKZOID v2.6...");
-        window.location.href = 'Blockzoid v2.6.html';
-    });
-
-    // Botón MODO SUPERVIVENCIA
     supervivenciaBtn.addEventListener('click', () => {
-        console.log("Iniciando MODO SUPERVIVENCIA...");
         window.location.href = 'supervivencia.html';
     });
 
-    // Botón MODO DESTRUCCIÓN
     destruccionBtn.addEventListener('click', () => {
-        alert('🚧 ¡MODO DESTRUCCIÓN en desarrollo! Gracias por tu interés. Estará disponible pronto.');
+        alert('🚧 ¡MODO DESTRUCCIÓN en desarrollo! Pronto estará disponible.');
     });
 });

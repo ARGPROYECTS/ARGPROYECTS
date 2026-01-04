@@ -1,61 +1,116 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARGProyects - Menú Principal</title>
-    <link rel="stylesheet" href="menu_principal.css"> 
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div id="menu-background">
-        <div class="overlay"></div>
-        
-        <div id="title-container">
-            <h1 class="title-glow">ARGPROYECTS</h1> 
-            <h2 class="subtitle">TOXIC GAMES PRODUCTIONS</h2>
-        </div>
-        
-        <div id="main-menu">
-            <div class="button-group">
-                <button id="startButton" class="btn-start btn-animated">
-                    VAMOS A JUGAR
-                </button>
-                
-                <a href="#" id="open-mode-btn" class="btn-secondary">
-                    MODO DE JUEGO
-                </a>
-            </div>
-            
-        </div>
-        
-        <footer id="signature">
-            Hecho por Alvaro Restrepo
-        </footer>
-    </div>
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: 'Montserrat', sans-serif;
+    background-color: #0a0a0a;
+    color: white;
+    overflow: hidden;
+}
 
-    <div id="mode-modal" class="modal-container">
-        <div class="modal-content">
-            
-            <button id="close-mode-btn" class="close-btn">&times;</button>
-            
-            <h3 class="modal-title">Selecciona el Modo de Juego</h3>
+#menu-background {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
+    position: relative;
+}
 
-            <div class="mode-options">
-                <button id="blockzoid-btn" class="mode-btn btn-blockzoid">
-                    BLOCKZOID V2.6
-                </button>
+.title-glow {
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-weight: 900;
+    text-shadow: 0 0 20px #ff0000;
+    margin: 0;
+}
 
-                <button id="supervivencia-btn" class="mode-btn btn-primary-mode">
-                    MODO SUPERVIVENCIA
-                </button>
-                
-                <button id="destruccion-btn" class="mode-btn btn-secondary-mode">
-                    MODO DESTRUCCIÓN <span>(En producción)</span>
-                </button>
-            </div>
-        </div>
-    </div>
-    <script src="script.js"></script>
-</body>
-</html>
+.subtitle {
+    font-size: 1rem;
+    letter-spacing: 5px;
+    color: #888;
+    margin-bottom: 40px;
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 10;
+}
+
+button, .btn-secondary {
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.btn-blockzoid-main {
+    background: #007bff;
+    color: white;
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.4);
+}
+
+.btn-blockzoid-main:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(0, 123, 255, 0.7);
+}
+
+.btn-start { background: #ff0000; color: white; }
+.btn-secondary { background: transparent; color: white; border: 2px solid #444; text-decoration: none; }
+.btn-secondary:hover { border-color: white; }
+
+/* Estilos del Modal */
+.modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-container.active { display: flex; }
+
+.modal-content {
+    background: #111;
+    padding: 30px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    text-align: center;
+}
+
+.mode-options { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.mode-btn { width: 100%; }
+.btn-blockzoid { background: #007bff; color: white; }
+.btn-primary-mode { background: #28a745; color: white; }
+.btn-secondary-mode { background: #6c757d; color: white; opacity: 0.6; }
+
+.close-btn {
+    position: absolute;
+    top: 5px;
+    right: 15px;
+    background: none;
+    color: white;
+    font-size: 2rem;
+}
+
+#signature {
+    position: absolute;
+    bottom: 20px;
+    font-size: 0.8rem;
+    opacity: 0.4;
+}
