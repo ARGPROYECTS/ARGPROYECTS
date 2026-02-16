@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Servidores - ARGPROYECTS</title>
-    <link rel="stylesheet" href="menu_principal.css">
+    <link rel="stylesheet" href="./menu_principal.css">
 </head>
 <body>
     <div id="menu-background">
@@ -89,6 +89,12 @@
 
             if(copyBtn) copyBtn.addEventListener('click', ()=> copyIP(copyBtn));
             if(copyBtn2) copyBtn2.addEventListener('click', ()=> copyIP(copyBtn2));
+        })();
+
+        // Diagnóstico: comprobar si CSS cargó
+        (function(){
+            const found = Array.from(document.styleSheets).some(s => s.href && s.href.includes('menu_principal.css'));
+            if(!found) console.warn('Aviso: menu_principal.css no parece cargado en servers.html');
         })();
     </script>
 </body>
