@@ -83,23 +83,13 @@
                             <div class="social-tagline">${data.tagline||''}</div>
                         </div>
                         <div class="social-actions">
-                                <a class="btn-main social-open" href="${data.link||'#'}" target="_blank">Ir al canal</a>
-                                <button class="btn-main alt social-edit" style="display:none;">Editar</button>
+                                <a class="btn-main social-open" href="${data.link||'#'}" target="_blank">Quiero darle una vueltica</a>
                             </div>
                     </div>
                     <div class="social-content"> <p class="muted">${data.desc||'No hay descripción configurada.'}</p> </div>
                 `;
 
-                // attach handlers
-                const editBtn = li.querySelector('.social-edit');
                 const openLink = li.querySelector('.social-open');
-
-                // admin edit visibility
-                const cur = apAuth.getCurrent();
-                if(cur && cur.role==='admin'){
-                    editBtn.style.display = 'inline-block';
-                    editBtn.addEventListener('click', ()=> openEditModal(site, li));
-                }
 
                 // if no link, disable openLink
                 if(!data.link){ openLink.href='#'; openLink.removeAttribute('target'); openLink.textContent='Canal no configurado'; openLink.classList.add('btn-main','alt'); }
@@ -110,28 +100,6 @@
             function renderAllFromData(socials){
                 listEl.innerHTML = '';
                 platforms.forEach(p=> listEl.appendChild(createItem(p, socials[p]||{})));
-            }
-
-            function openEditModal(site, li){
-                let modal = document.getElementById('social-edit-modal'); if(modal) modal.remove();
-                const cur = apAuth.getSocial(site) || {};
-                modal = document.createElement('div'); modal.id='social-edit-modal'; modal.className='edit-modal';
-                modal.innerHTML = `\n                <div class="modal-card">\n                    <h3>Editar ${mapNames[site] || site}</h3>\n                    <input id="s-title" placeholder="Título corto (ej: Canal Oficial)" value="${(cur.tagline||'').replace(/"/g,'&quot;')}">\n                    <input id="s-link" placeholder="URL del canal (https://...)" value="${(cur.link||'').replace(/"/g,'&quot;')}">\n                    <textarea id="s-desc" placeholder="Descripción">${(cur.desc||'').replace(/"/g,'&quot;')}</textarea>\n                    <div class="modal-actions">\n                        <button id="s-save" class="btn-main">Guardar</button>\n                        <button id="s-cancel" class="btn-main alt">Cancelar</button>\n                    </div>\n                </div>`;
-                document.body.appendChild(modal);
-                document.getElementById('s-cancel').addEventListener('click', ()=> modal.remove());
-                document.getElementById('s-save').addEventListener('click', ()=>{
-                    const data = { tagline: document.getElementById('s-title').value.trim(), link: document.getElementById('s-link').value.trim(), desc: document.getElementById('s-desc').value.trim() };
-                    if(!data.link){ if(!confirm('La URL está vacía. Guardar de todos modos?')) return; }
-                    
-                    if(window.fbStorage && fbStorage.isReady) {
-                        fbStorage.setSocial(site, data);
-                    } else {
-                        if(!confirm("⚠️ No hay conexión con la nube. ¿Guardar solo localmente?")) return;
-                        apAuth.setSocial(site, data);
-                    }
-                    modal.remove();
-                    loadAndRender();
-                });
             }
 
             document.addEventListener('DOMContentLoaded', ()=>{

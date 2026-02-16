@@ -94,7 +94,8 @@ body, html {
     flex-direction: column;
     gap: 20px;
     z-index: 10;
-    width: 300px;
+    width: 100%;
+    max-width: 550px;
 }
 
 /* Smooth entrance */
@@ -116,7 +117,7 @@ body, html {
 }
 
 .btn-option {
-    padding: 12px 18px;
+    padding: 16px 24px;
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
     color: var(--muted);
     border: 1px solid rgba(255,255,255,0.04);
@@ -124,9 +125,10 @@ body, html {
     cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 1.6px;
-    font-weight: 700;
+    font-weight: 800;
+    font-size: 1.1rem;
     transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms ease, color 180ms ease;
-    min-width: 140px;
+    min-width: 200px;
 }
 
 .btn-option:hover { transform: translateY(-4px); color: white; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
@@ -148,13 +150,13 @@ body, html {
 @media (max-width: 640px) {
     .menu-columns { flex-direction: column; align-items: center; }
     .menu-options { flex-direction: row; }
-    .button-group { width: 260px; }
+    .button-group { width: 90%; max-width: 400px; }
 }
 
 /* Estilo Base para los botones principales */
 .btn-main {
-    padding: 12px 18px;
-    font-size: 1rem;
+    padding: 24px 32px;
+    font-size: 1.3rem;
     font-weight: 800;
     text-transform: uppercase;
     border: none;

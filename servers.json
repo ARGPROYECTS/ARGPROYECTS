@@ -1,11 +1,14 @@
 [
   {
-    "id": "srv1",
-    "name": "Servidor Principal",
-    "ip": "play.ejemplo.com",
-    "desc": "Servidor oficial de la comunidad.",
-    "players": 10,
-    "map": "Mundo Base",
-    "online": true
+    "id": "argames-mods",
+    "name": "Server con Mods ARGames",
+    "ip": "181.137.6.163:25565",
+    "desc": "Servidor con mods. Modpack v1.2 requerido.",
+    "players": 0,
+    "map": "Survival",
+    "online": true,
+    "version": "1.20.1 Forge",
+    "modpack": "https://drive.google.com/file/d/1a9L1rj_UNRR5aA2Vjj8d8VUxYd0_WfGD/view",
+    "discord": "https://discord.gg/J5BPsRugjQ"
   }
 ]

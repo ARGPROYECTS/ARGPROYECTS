@@ -108,7 +108,6 @@
                         </ul>
                         <div class="server-actions">
                                 <button class="btn-main alt btn-copy-ip-2">Copiar IP</button>
-                            ${isAdmin? '<button class="btn-small sv-edit-inline" data-id="'+s.id+'">Editar</button>' : ''}
                         </div>
                     </div>`;
                 return card;
@@ -118,35 +117,15 @@
             function escapeAttr(s){ return (s||'').replace(/"/g,'"'); }
 
             const container = document.getElementById('servers-list');
-            const isAdmin = !!(window.apAuth && apAuth.getCurrent && apAuth.getCurrent() && apAuth.getCurrent().role==='admin');
-            // if admin, add quick controls to header
-            if(isAdmin){
-                try{
-                    const hdr = document.querySelector('.servers-hero');
-                    if(hdr && !document.getElementById('admin-controls')){
-                        const ctrl = document.createElement('div'); ctrl.id='admin-controls'; ctrl.className='admin-controls';
-                        ctrl.innerHTML = '<button id="admin-add-server" class="btn-main">Agregar servidor</button> <button id="admin-panel" class="btn-main alt">Panel Admin</button>';
-                        hdr.appendChild(ctrl);
-                        document.getElementById('admin-panel').addEventListener('click', ()=> location.href='admin.html');
-                        document.getElementById('admin-add-server').addEventListener('click', ()=> openAddModal());
-                    }
-                }catch(e){ console.warn('no se pudo insertar controles admin', e); }
-            }
             // render helper
             function renderList(list){
-                console.log('rendering servers list, count=', list.length, { isAdmin });
+                console.log('rendering servers list, count=', list.length);
                 const countEl = document.getElementById('servers-count'); if(countEl) countEl.textContent = list.length + ' servidores';
                 if(!list || list.length===0){ container.innerHTML = '<p class="muted">No hay servidores publicados todavía.</p>'; return; }
                 container.innerHTML = '';
                 list.forEach(s=> container.appendChild(makeCard(s)));
 
                 // add handlers
-                if(isAdmin){
-                    Array.from(container.querySelectorAll('.sv-edit-inline')).forEach(b=> b.addEventListener('click', e=>{
-                        const id = e.target.dataset.id; const s = (apAuth.getServers()||[]).find(x=>x.id===id); if(!s) return; openEditModal(s);
-                    }));
-                }
-
                 Array.from(container.querySelectorAll('.btn-copy-ip, .btn-copy-ip-2')).forEach(b=>{
                     b.addEventListener('click', ()=>{
                         const ip = b.closest('.card-right').querySelector('.server-ip').textContent.trim();
@@ -161,79 +140,6 @@
             setInterval(loadServers, 5000);
             }catch(err){ console.error('Error rendering servers list', err); document.getElementById('servers-list').innerHTML = '<p class="muted">Error al cargar servidores. Revisa la consola.</p>'; }
         })();
-
-        // --- inline edit modal for admins ---
-        function openEditModal(server){
-            // create modal
-            let modal = document.getElementById('sv-edit-modal');
-            if(modal) modal.remove();
-            modal = document.createElement('div'); modal.id='sv-edit-modal'; modal.className='edit-modal';
-            modal.innerHTML = `
-                <div class="modal-card">
-                    <h3>Editar servidor</h3>
-                    <input id="m-name" placeholder="Nombre" value="${escapeHtml(server.name||'')}">
-                    <input id="m-ip" placeholder="IP:puerto" value="${escapeHtml(server.ip||'')}">
-                    <input id="m-version" placeholder="Versión" value="${escapeHtml(server.version||'')}">
-                    <input id="m-modpack" placeholder="URL modpack" value="${escapeHtml(server.modpack||'')}">
-                    <input id="m-discord" placeholder="URL discord" value="${escapeHtml(server.discord||'')}">
-                    <textarea id="m-desc" placeholder="Descripción">${escapeHtml(server.desc||'')}</textarea>
-                    <div class="modal-actions">
-                        <button id="m-save" class="btn-main">Guardar</button>
-                        <button id="m-cancel" class="btn-main alt">Cancelar</button>
-                    </div>
-                </div>`;
-            document.body.appendChild(modal);
-            document.getElementById('m-cancel').addEventListener('click', ()=> modal.remove());
-            document.getElementById('m-save').addEventListener('click', async ()=>{
-                const data = { name: document.getElementById('m-name').value.trim(), ip: document.getElementById('m-ip').value.trim(), version: document.getElementById('m-version').value.trim(), modpack: document.getElementById('m-modpack').value.trim(), discord: document.getElementById('m-discord').value.trim(), desc: document.getElementById('m-desc').value.trim() };
-                if(!data.name || !data.ip){ alert('Nombre e IP son requeridos'); return; }
-                
-                if(window.fbStorage && fbStorage.isReady) {
-                    await fbStorage.updateServer(server.id, data);
-                } else {
-                    if(!confirm("⚠️ No hay conexión con la nube. ¿Guardar solo localmente? (No será visible en otros PC)")) return;
-                    apAuth.updateServer(server.id, data); // Fallback local
-                }
-                modal.remove();
-                location.reload();
-            });
-        }
-
-        // open add modal for admins
-        function openAddModal(){
-            let modal = document.getElementById('sv-edit-modal');
-            if(modal) modal.remove();
-            modal = document.createElement('div'); modal.id='sv-edit-modal'; modal.className='edit-modal';
-            modal.innerHTML = `
-                <div class="modal-card">
-                    <h3>Agregar servidor</h3>
-                    <input id="m-name" placeholder="Nombre" value="">
-                    <input id="m-ip" placeholder="IP:puerto" value="">
-                    <input id="m-version" placeholder="Versión" value="">
-                    <input id="m-modpack" placeholder="URL modpack" value="">
-                    <input id="m-discord" placeholder="URL discord" value="">
-                    <textarea id="m-desc" placeholder="Descripción"></textarea>
-                    <div class="modal-actions">
-                        <button id="m-save" class="btn-main">Agregar</button>
-                        <button id="m-cancel" class="btn-main alt">Cancelar</button>
-                    </div>
-                </div>`;
-            document.body.appendChild(modal);
-            document.getElementById('m-cancel').addEventListener('click', ()=> modal.remove());
-                document.getElementById('m-save').addEventListener('click', async ()=>{
-                const data = { name: document.getElementById('m-name').value.trim(), ip: document.getElementById('m-ip').value.trim(), version: document.getElementById('m-version').value.trim(), modpack: document.getElementById('m-modpack').value.trim(), discord: document.getElementById('m-discord').value.trim(), desc: document.getElementById('m-desc').value.trim() };
-                if(!data.name || !data.ip){ alert('Nombre e IP son requeridos'); return; }
-                
-                if(window.fbStorage && fbStorage.isReady) {
-                    await fbStorage.addServer(data);
-                } else {
-                    if(!confirm("⚠️ No hay conexión con la nube. ¿Guardar solo localmente? (No será visible en otros PC)")) return;
-                    apAuth.addServer(data); // Fallback local
-                }
-                modal.remove();
-                location.reload();
-            });
-        }
 
         function escapeHtml(str){ return (str+'').replace(/[&<>\"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
