@@ -4,6 +4,7 @@
     const STORAGE_KEY = 'ap_users_v1';
     const CURRENT_KEY = 'ap_current_v1';
     const SERVERS_KEY = 'ap_servers_v1';
+    const SOCIALS_KEY = 'ap_socials_v1';
 
     async function hash(text){
         const enc = new TextEncoder();
@@ -58,6 +59,26 @@
         let list = getServers();
         list = list.filter(x=>x.id!==id);
         saveServers(list);
+        return true;
+    }
+
+    // Socials (YouTube, Kick, TikTok, etc.) - simple storage for editable platform info
+    function getSocials(){
+        try{ return JSON.parse(localStorage.getItem(SOCIALS_KEY) || '{}'); }
+        catch(e){ return {}; }
+    }
+
+    function saveSocials(obj){ localStorage.setItem(SOCIALS_KEY, JSON.stringify(obj)); }
+
+    function getSocial(key){
+        const s = getSocials();
+        return s[key] || null;
+    }
+
+    function setSocial(key, data){
+        const all = getSocials();
+        all[key] = Object.assign({}, all[key]||{}, data);
+        saveSocials(all);
         return true;
     }
 
@@ -129,7 +150,9 @@
     window.apAuth = {
         hash, getUsers, saveUsers, register, login, logout, getCurrent, ensureAdminExists, listUsers, setRole, deleteUser,
         // servers
-        getServers, saveServers, addServer, updateServer, deleteServer
+        getServers, saveServers, addServer, updateServer, deleteServer,
+        // socials
+        getSocials, saveSocials, getSocial, setSocial
     };
 
     // ensure there's at least one admin on load

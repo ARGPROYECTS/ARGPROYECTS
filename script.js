@@ -6,9 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnMenuServidores = document.getElementById('btn-menu-servidores');
     const juegosPanel = document.getElementById('juegos-panel');
 
-    // Ocultar los botones de los juegos por defecto
+    // Ocultar el panel de juegos por defecto (usar clases)
     if (juegosPanel) {
-        juegosPanel.style.display = 'none';
+        juegosPanel.classList.remove('active');
     }
     if (btnMenuJuegos) {
         btnMenuJuegos.classList.remove('active');
@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // activar visual
             btnMenuJuegos.classList.add('active');
             if (btnMenuServidores) btnMenuServidores.classList.remove('active');
-            // asegurarnos de que el panel de juegos esté visible
-            juegosPanel.style.display = 'block';
+            // asegurarnos de que el panel de juegos esté visible (usar clase)
+            juegosPanel.classList.add('active');
         });
     }
 
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnMenuServidores) {
         btnMenuServidores.addEventListener('click', () => {
             // ocultar panel de juegos si estaba visible
-            if (juegosPanel) juegosPanel.style.display = 'none';
+            if (juegosPanel) juegosPanel.classList.remove('active');
             if (btnMenuJuegos) btnMenuJuegos.classList.remove('active');
             btnMenuServidores.classList.add('active');
             // redirigir a servers

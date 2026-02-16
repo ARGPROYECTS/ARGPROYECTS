@@ -12,8 +12,9 @@
         <div class="overlay"></div>
         
         <div id="title-container">
-            <h1 class="title-glow">ARGPROYECTS</h1> 
-            <h2 class="subtitle">TOXIC GAMES PRODUCTIONS</h2>
+            <h1 class="title-glow">ARGPROYECTS</h1>
+            <h2 class="subtitle">Juegos y Servidores</h2>
+            <p class="hero-lead">Accede a nuestros juegos, paneles de servidores y comunidad. Selecciona una opción para comenzar.</p>
             <div class="user-area">
                 <span id="user-welcome" class="muted">No has iniciado sesión</span>
                 <a id="btn-login-link" class="btn-small" href="login.html">Iniciar</a>
@@ -27,6 +28,7 @@
                 <div class="menu-options">
                     <button id="btn-menu-juegos" class="btn-option active">Juegos</button>
                     <button id="btn-menu-servidores" class="btn-option">Servidores</button>
+                    <button id="btn-menu-info" class="btn-option">Información</button>
                 </div>
 
                 <div class="menu-content">
@@ -39,6 +41,23 @@
                 </div>
             </div>
         </div>
+
+    <div class="menu-content">
+        <div id="juegos-panel" class="panel">
+            <div class="button-group">
+                <button id="btn-play-blockzoid" class="btn-main btn-blockzoid">JUGAR BLOCKZOID ONLINE</button>
+                <button id="btn-play-supervivencia" class="btn-main btn-supervivencia">MODO CARTAS SALVA EL MUNDO</button>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        // Información: ir a la página social principal
+        document.addEventListener('DOMContentLoaded', ()=>{
+            const info = document.getElementById('btn-menu-info');
+            if(info) info.addEventListener('click', ()=> location.href='social.html');
+        });
+    </script>
         
         <footer id="signature">
             Hecho por Alvaro Restrepo

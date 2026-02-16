@@ -13,11 +13,22 @@
         <header class="servers-hero">
             <div class="hero-left">
                 <h1 class="title-glow">SERVIDORES</h1>
-                <h2 class="subtitle">Lista de servidores</h2>
+                <h2 class="subtitle">Encuentra y únete a nuestras comunidades</h2>
+                <p class="hero-lead">Explora servidores con información clara: versión, modpack, discord y estado en tiempo real. Usa los botones para copiar la IP o visitar los enlaces del servidor.</p>
             </div>
         </header>
 
         <main class="servers-area">
+            <div class="servers-controls">
+                <div class="servers-info">
+                    <h3>Servidores publicados</h3>
+                    <p id="servers-count" class="muted">Cargando...</p>
+                </div>
+                <div class="servers-actions">
+                    <button id="servers-refresh" class="btn-small">Actualizar</button>
+                </div>
+            </div>
+
             <div id="servers-list" class="server-grid">
                 <!-- servidores se renderizan aquí dinámicamente -->
             </div>
@@ -58,8 +69,7 @@
                             ${s.discord? `<li><strong>Discord:</strong> <a href="${escapeAttr(s.discord)}" target="_blank" rel="noopener">Únete</a></li>` : ''}
                         </ul>
                         <div class="server-actions">
-                            <button onclick="location.href='menu_principal.html'" class="btn-main">Volver al Menú</button>
-                            <button class="btn-main alt btn-copy-ip-2">Copiar IP</button>
+                                <button class="btn-main alt btn-copy-ip-2">Copiar IP</button>
                             ${isAdmin? '<button class="btn-small sv-edit-inline" data-id="'+s.id+'">Editar</button>' : ''}
                         </div>
                     </div>`;
@@ -192,6 +202,13 @@
             const found = Array.from(document.styleSheets).some(s => s.href && s.href.includes('menu_principal.css'));
             if(!found) console.warn('Aviso: menu_principal.css no parece cargado en servers.html');
         })();
+
+        // fixed back button handler (global) - attach after DOM ready
+        document.addEventListener('DOMContentLoaded', ()=>{
+            const btn = document.getElementById('back-menu-fixed');
+            if(btn) btn.addEventListener('click', ()=> location.href='menu_principal.html');
+        });
     </script>
+    <button id="back-menu-fixed" class="btn-main alt">Volver al menú principal</button>
 </body>
 </html>
