@@ -1,0 +1,10 @@
+[
+  {
+    "id": "srv1",
+    "name": "Servidor Ejemplo",
+    "ip": "play.example.com:27015",
+    "desc": "Servidor de prueba - en línea",
+    "players": 12,
+    "map": "island"
+  }
+]

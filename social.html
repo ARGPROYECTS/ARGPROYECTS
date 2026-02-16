@@ -37,15 +37,43 @@
     <button id="back-menu-fixed" class="btn-main alt">Volver al menú principal</button>
 
     <script src="./auth.js"></script>
+    <script src="./firebase-client.js"></script>
     <script>
         const mapNames = { youtube: 'YouTube', kick: 'Kick', tiktok: 'TikTok' };
 
         (function(){
+            const API_BASE = 'http://localhost:3000';
             const platforms = ['youtube','kick','tiktok'];
             const listEl = document.getElementById('social-list');
 
-            function createItem(site){
-                const data = apAuth.getSocial(site) || {};
+            async function fetchSocialsFromApi(){
+                try{
+                    if(window.fbStorage && fbStorage.getSocials) {
+                        const s = await fbStorage.getSocials(); if(s) return s;
+                    }
+                }catch(e){ console.warn('fb getSocials failed', e); }
+
+                // Only try local API when running on localhost to avoid ERR_CONNECTION_REFUSED
+                const host = window.location.hostname;
+                if(host !== 'localhost' && host !== '127.0.0.1'){
+                    return null;
+                }
+
+                try{
+                    const r = await fetch(API_BASE + '/socials'); if(!r.ok) throw new Error('bad');
+                    const data = await r.json(); if(data){ if(window.apAuth && apAuth.saveSocials) apAuth.saveSocials(data); return data; }
+                }catch(e){ console.warn('fetch socials failed', e); }
+                return null;
+            }
+
+            async function loadAndRender(){
+                const remote = await fetchSocialsFromApi();
+                const socials = remote || apAuth.getSocials() || {};
+                renderAllFromData(socials);
+            }
+
+            function createItem(site, data){
+                data = data || apAuth.getSocial(site) || {};
                 const li = document.createElement('li'); li.className = 'social-item expanded';
                 li.dataset.site = site;
                 li.innerHTML = `
@@ -79,9 +107,9 @@
                 return li;
             }
 
-            function renderAll(){
+            function renderAllFromData(socials){
                 listEl.innerHTML = '';
-                platforms.forEach(p=> listEl.appendChild(createItem(p)));
+                platforms.forEach(p=> listEl.appendChild(createItem(p, socials[p]||{})));
             }
 
             function openEditModal(site, li){
@@ -95,8 +123,16 @@
                     const data = { tagline: document.getElementById('s-title').value.trim(), link: document.getElementById('s-link').value.trim(), desc: document.getElementById('s-desc').value.trim() };
                     if(!data.link){ if(!confirm('La URL está vacía. Guardar de todos modos?')) return; }
                     apAuth.setSocial(site, data);
+                    // attempt server sync (only when running on localhost)
+                    try{
+                        const host = window.location.hostname;
+                        if(host === 'localhost' || host === '127.0.0.1'){
+                            fetch(API_BASE + '/socials', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ key: site, data }) })
+                                .catch(e=> console.warn('no sync socials', e));
+                        }
+                    }catch(e){ console.warn('no sync socials', e); }
                     modal.remove();
-                    renderAll();
+                    loadAndRender();
                 });
             }
 
@@ -105,8 +141,9 @@
                 const backMenuFixed = document.getElementById('back-menu-fixed'); if(backMenuFixed) backMenuFixed.addEventListener('click', ()=> location.href='menu_principal.html');
             });
 
-            // initial render
-            renderAll();
+            // initial render + polling
+            loadAndRender();
+            setInterval(loadAndRender, 5000);
         })();
     </script>
 </body>

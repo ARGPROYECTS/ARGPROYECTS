@@ -38,13 +38,51 @@
     </div>
 
     <script src="./auth.js"></script>
+    <script src="./firebase-client.js"></script>
     <script>
         // Diagnostics
         console.log('servers.js loaded', { apAuth: typeof apAuth, current: (window.apAuth && apAuth.getCurrent)? apAuth.getCurrent() : null });
 
+        const API_BASE = 'http://localhost:3000';
+
         // Renderizar lista de servidores y añadir funcionalidad (copiar IP, abrir enlaces, editar para admins)
         (function(){
             try{
+            async function fetchServersFromApi(){
+                // prefer firebase if available
+                try{
+                    if(window.fbStorage && fbStorage.getServers){
+                        const list = await fbStorage.getServers();
+                        if(Array.isArray(list)) return list;
+                    }
+                }catch(e){ console.warn('fbStorage getServers failed', e); }
+
+                // Only try local API when running on localhost to avoid ERR_CONNECTION_REFUSED
+                const host = window.location.hostname;
+                if(host !== 'localhost' && host !== '127.0.0.1'){
+                    // Skip local API when hosted (GitHub Pages or other domain)
+                    return null;
+                }
+
+                try{
+                    const r = await fetch(API_BASE + '/servers');
+                    if(!r.ok) throw new Error('bad');
+                    const data = await r.json();
+                    if(Array.isArray(data)){
+                        // persist locally as backup
+                        if(window.apAuth && apAuth.saveServers) apAuth.saveServers(data);
+                        return data;
+                    }
+                }catch(e){ console.warn('API servers fetch failed', e); }
+                return null;
+            }
+
+            async function loadServers(){
+                const remote = await fetchServersFromApi();
+                let list = remote || ((window.apAuth && apAuth.getServers) ? apAuth.getServers() : []);
+                renderList(list);
+            }
+
             function makeCard(s){
                 const card = document.createElement('section');
                 card.className = 'server-card feature';
@@ -76,7 +114,7 @@
                 return card;
             }
 
-            function escapeHtml(str){ return (str+'').replace(/[&<>\"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+            function escapeHtml(str){ return (str+'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
             function escapeAttr(s){ return (s||'').replace(/"/g,'"'); }
 
             const container = document.getElementById('servers-list');
@@ -94,42 +132,33 @@
                     }
                 }catch(e){ console.warn('no se pudo insertar controles admin', e); }
             }
-            const list = (window.apAuth && apAuth.getServers) ? apAuth.getServers() : [];
-            console.log('servers list loaded, count=', list.length, { isAdmin });
-            if(!list || list.length===0){ container.innerHTML = '<p class="muted">No hay servidores publicados todavía.</p>'; }
-            else{
+            // render helper
+            function renderList(list){
+                console.log('rendering servers list, count=', list.length, { isAdmin });
+                const countEl = document.getElementById('servers-count'); if(countEl) countEl.textContent = list.length + ' servidores';
+                if(!list || list.length===0){ container.innerHTML = '<p class="muted">No hay servidores publicados todavía.</p>'; return; }
                 container.innerHTML = '';
-                list.forEach(s=>{
-                    const card = makeCard(s);
-                    container.appendChild(card);
-                });
+                list.forEach(s=> container.appendChild(makeCard(s)));
 
+                // add handlers
                 if(isAdmin){
-                    // add handlers for inline edit buttons
-                    Array.from(container.querySelectorAll('.sv-edit-inline')).forEach(b=>{
-                        b.addEventListener('click', e=>{
-                            const id = e.target.dataset.id;
-                            const s = apAuth.getServers().find(x=>x.id===id);
-                            if(!s) return;
-                            openEditModal(s);
-                        });
-                    });
+                    Array.from(container.querySelectorAll('.sv-edit-inline')).forEach(b=> b.addEventListener('click', e=>{
+                        const id = e.target.dataset.id; const s = (apAuth.getServers()||[]).find(x=>x.id===id); if(!s) return; openEditModal(s);
+                    }));
                 }
 
-                // eventos copiar
-                Array.from(container.querySelectorAll('.btn-copy-ip')).forEach(b=>{
-                    b.addEventListener('click', ()=>{
-                        const ip = b.closest('.card-right').querySelector('.server-ip').textContent.trim();
-                        navigator.clipboard?.writeText(ip).then(()=>{ const orig=b.textContent; b.textContent='Copiado!'; setTimeout(()=>b.textContent=orig,1400); }).catch(()=>alert('No se pudo copiar: '+ip));
-                    });
-                });
-                Array.from(container.querySelectorAll('.btn-copy-ip-2')).forEach(b=>{
+                Array.from(container.querySelectorAll('.btn-copy-ip, .btn-copy-ip-2')).forEach(b=>{
                     b.addEventListener('click', ()=>{
                         const ip = b.closest('.card-right').querySelector('.server-ip').textContent.trim();
                         navigator.clipboard?.writeText(ip).then(()=>{ const orig=b.textContent; b.textContent='Copiado!'; setTimeout(()=>b.textContent=orig,1400); }).catch(()=>alert('No se pudo copiar: '+ip));
                     });
                 });
             }
+
+            // initial load and polling
+            loadServers();
+            document.getElementById('servers-refresh').addEventListener('click', ()=> loadServers());
+            setInterval(loadServers, 5000);
             }catch(err){ console.error('Error rendering servers list', err); document.getElementById('servers-list').innerHTML = '<p class="muted">Error al cargar servidores. Revisa la consola.</p>'; }
         })();
 
@@ -155,12 +184,13 @@
                 </div>`;
             document.body.appendChild(modal);
             document.getElementById('m-cancel').addEventListener('click', ()=> modal.remove());
-            document.getElementById('m-save').addEventListener('click', ()=>{
+            document.getElementById('m-save').addEventListener('click', async ()=>{
                 const data = { name: document.getElementById('m-name').value.trim(), ip: document.getElementById('m-ip').value.trim(), version: document.getElementById('m-version').value.trim(), modpack: document.getElementById('m-modpack').value.trim(), discord: document.getElementById('m-discord').value.trim(), desc: document.getElementById('m-desc').value.trim() };
                 if(!data.name || !data.ip){ alert('Nombre e IP son requeridos'); return; }
                 apAuth.updateServer(server.id, data);
+                // try remote sync
+                try{ await fetch('http://localhost:3000/servers', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(Object.assign({}, { id: server.id }, data)) }); }catch(e){ console.warn('No se pudo sincronizar edición remoto', e); }
                 modal.remove();
-                // re-render by reloading page
                 location.reload();
             });
         }
@@ -186,10 +216,13 @@
                 </div>`;
             document.body.appendChild(modal);
             document.getElementById('m-cancel').addEventListener('click', ()=> modal.remove());
-            document.getElementById('m-save').addEventListener('click', ()=>{
+                document.getElementById('m-save').addEventListener('click', async ()=>{
                 const data = { name: document.getElementById('m-name').value.trim(), ip: document.getElementById('m-ip').value.trim(), version: document.getElementById('m-version').value.trim(), modpack: document.getElementById('m-modpack').value.trim(), discord: document.getElementById('m-discord').value.trim(), desc: document.getElementById('m-desc').value.trim() };
                 if(!data.name || !data.ip){ alert('Nombre e IP son requeridos'); return; }
-                apAuth.addServer(data);
+                // save locally
+                const created = apAuth.addServer(data);
+                // try to sync to server
+                try{ await fetch('http://localhost:3000/servers', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(Object.assign({}, created)) }); }catch(e){ console.warn('No se pudo sincronizar servidor remoto', e); }
                 modal.remove();
                 location.reload();
             });

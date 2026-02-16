@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARCA: Último Santuario</title>
     <link rel="stylesheet" href="supervivencia.css">
+    <script src="auth.js" defer></script>
+    <script src="firebase-client.js"></script>
     <script src="supervivencia.js" defer></script>
 </head>
 <body>
@@ -86,7 +88,7 @@
             </div>
 
             <div id="game-controls" class="control-buttons">
-                <button id="menu-btn" onclick="window.location.href='menu_principal.html'">Menú Principal</button>
+                <button id="menu-btn">Menú Principal</button>
                 <div class="game-action-buttons">
                     <button id="confirm-action-btn" disabled>Confirmar Acción</button>
                     <button id="restart-btn">Reiniciar</button> 
@@ -126,5 +128,112 @@
             <button id="cerrar-reglas-btn">¡Entendido! Empezar a Proteger</button>
         </div>
     </div>
+
+    <!-- Scoreboard UI + login enforcement -->
+    <style>
+        #scores-btn-s { position: fixed; right: 18px; bottom: 18px; z-index:9999; background:#16303a; color:#fff; padding:10px 12px; border-radius:8px; border:2px solid #2ecc71; cursor:pointer }
+        #scores-modal-s { position: fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:10000; background:#071019; color:#fff; padding:16px; border-radius:10px; display:none; min-width:300px }
+        #scores-list-s { max-height:240px; overflow:auto; margin:10px 0; padding:0; list-style:none }
+        #scores-list-s li{ display:flex; justify-content:space-between; padding:8px 6px; border-bottom:1px solid rgba(255,255,255,0.03) }
+        #scores-modal-s input[type=number]{ padding:6px; border-radius:6px; border:1px solid #333; background:#000; color:#fff }
+    </style>
+
+    <div id="scores-btn-s">Puntuaciones</div>
+    <div id="scores-modal-s" role="dialog" aria-hidden="true">
+        <h3 style="margin:0 0 6px 0; color:#f1c40f">Puntuaciones - SUPERVIVENCIA</h3>
+        <div class="small">Top 10 (servidor)</div>
+        <ul id="scores-list-s"></ul>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+            <input id="score-input-s" type="number" placeholder="Tu puntuación" />
+            <button id="score-send-s">Enviar</button>
+            <button id="score-close-s">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            const API_BASE = 'http://localhost:3000';
+            function requireLogin(){ if(!window.apAuth || !apAuth.getCurrent()){ location.href='login.html'; return false } return true }
+            document.addEventListener('DOMContentLoaded', ()=>{
+                if(!requireLogin()) return;
+                const btn = document.getElementById('scores-btn-s');
+                const modal = document.getElementById('scores-modal-s');
+                const closeBtn = document.getElementById('score-close-s');
+                const listEl = document.getElementById('scores-list-s');
+                const sendBtn = document.getElementById('score-send-s');
+                const scoreInput = document.getElementById('score-input-s');
+
+                async function load(){
+                    listEl.innerHTML = '<li class="small">Cargando…</li>';
+                    try{
+                        const r = await fetch(`${API_BASE}/scores/supervivencia`);
+                        const data = await r.json();
+                        if(!Array.isArray(data) || data.length===0) listEl.innerHTML = '<li class="small">Sin puntuaciones</li>';
+                        else listEl.innerHTML = data.map((s,i)=>`<li><span>#${i+1} ${escapeHtml(s.player)}</span><span>${s.score}</span></li>`).join('');
+                    }catch(e){ listEl.innerHTML = '<li class="small">No se pudo conectar</li>'; }
+                }
+
+                btn.addEventListener('click', async ()=>{ modal.style.display='block'; await load(); modal.setAttribute('aria-hidden','false'); });
+                closeBtn.addEventListener('click', ()=>{ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); });
+                sendBtn.addEventListener('click', async ()=>{
+                    const v = Number(scoreInput.value);
+                    if(!v || isNaN(v)) return alert('Ingresa una puntuación válida');
+                    const user = apAuth.getCurrent();
+                    try{
+                        const res = await fetch(`${API_BASE}/scores/supervivencia`, { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ player: user.username||'anon', score: v }) });
+                        const j = await res.json();
+                        if(j.ok){ scoreInput.value=''; await load(); alert('Puntuación enviada'); }
+                        else alert('Error al enviar');
+                    }catch(e){ alert('Error de conexión'); }
+                });
+            });
+
+            function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+        })();
+    </script>
+
+    <script>
+    (function(){
+        const API_BASE = 'http://localhost:3000';
+        async function sendScore(score){
+            if(!window.apAuth) return;
+            const user = apAuth.getCurrent() || { username: 'anon' };
+            try{
+                if(window.fbStorage && fbStorage.addScore){
+                    await fbStorage.addScore('supervivencia', { player: user.username||'anon', score: Number(score)||0 });
+                    return;
+                }
+            }catch(e){ console.warn('fb addScore failed', e); }
+            try{
+                await fetch(`${API_BASE}/scores/supervivencia`, { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ player: user.username||'anon', score: Number(score)||0 }) });
+            }catch(e){ console.warn('Error enviando puntuación', e); }
+        }
+
+        function parsePop(){
+            const el = document.getElementById('pop-value');
+            if(!el) return 0;
+            const t = el.innerText || ''; // e.g. "123 / 4500"
+            const n = parseInt(t.split('/')[0].trim()) || 0;
+            return n;
+        }
+
+        document.addEventListener('DOMContentLoaded', ()=>{
+            const restart = document.getElementById('restart-btn');
+            if(restart) restart.addEventListener('click', async (e)=>{
+                const s = parsePop();
+                await sendScore(s);
+                location.reload();
+            });
+
+            const menu = document.getElementById('menu-btn');
+            if(menu) menu.addEventListener('click', async ()=>{
+                const s = parsePop();
+                await sendScore(s);
+                window.location.href = 'menu_principal.html';
+            });
+        });
+    })();
+    </script>
+
     </body>
 </html>
