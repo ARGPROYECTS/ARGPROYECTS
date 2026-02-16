@@ -187,9 +187,12 @@
             document.getElementById('m-save').addEventListener('click', async ()=>{
                 const data = { name: document.getElementById('m-name').value.trim(), ip: document.getElementById('m-ip').value.trim(), version: document.getElementById('m-version').value.trim(), modpack: document.getElementById('m-modpack').value.trim(), discord: document.getElementById('m-discord').value.trim(), desc: document.getElementById('m-desc').value.trim() };
                 if(!data.name || !data.ip){ alert('Nombre e IP son requeridos'); return; }
-                apAuth.updateServer(server.id, data);
-                // try remote sync
-                try{ await fetch('http://localhost:3000/servers', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(Object.assign({}, { id: server.id }, data)) }); }catch(e){ console.warn('No se pudo sincronizar edición remoto', e); }
+                
+                if(window.fbStorage && fbStorage.updateServer) {
+                    await fbStorage.updateServer(server.id, data);
+                } else {
+                    apAuth.updateServer(server.id, data); // Fallback local
+                }
                 modal.remove();
                 location.reload();
             });
@@ -219,10 +222,12 @@
                 document.getElementById('m-save').addEventListener('click', async ()=>{
                 const data = { name: document.getElementById('m-name').value.trim(), ip: document.getElementById('m-ip').value.trim(), version: document.getElementById('m-version').value.trim(), modpack: document.getElementById('m-modpack').value.trim(), discord: document.getElementById('m-discord').value.trim(), desc: document.getElementById('m-desc').value.trim() };
                 if(!data.name || !data.ip){ alert('Nombre e IP son requeridos'); return; }
-                // save locally
-                const created = apAuth.addServer(data);
-                // try to sync to server
-                try{ await fetch('http://localhost:3000/servers', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(Object.assign({}, created)) }); }catch(e){ console.warn('No se pudo sincronizar servidor remoto', e); }
+                
+                if(window.fbStorage && fbStorage.addServer) {
+                    await fbStorage.addServer(data);
+                } else {
+                    apAuth.addServer(data); // Fallback local
+                }
                 modal.remove();
                 location.reload();
             });
