@@ -26,10 +26,10 @@
     // Attempt to fetch users from remote backends (Firebase preferred, then local API on localhost)
     async function fetchUsersFromRemote(){
         try{
-            if(window.fbStorage && fbStorage.getUsers){
-                const u = await fbStorage.getUsers(); if(Array.isArray(u)) return u;
+            if(window.StaticDB && StaticDB.getUsers){
+                const u = await StaticDB.getUsers(); if(Array.isArray(u)) return u;
             }
-        }catch(e){ console.warn('fbStorage getUsers failed', e); }
+        }catch(e){ console.warn('StaticDB getUsers failed', e); }
 
         const host = window.location.hostname;
         if(host !== 'localhost' && host !== '127.0.0.1') return null;
@@ -49,11 +49,11 @@
     // Sync a single user to remote API when available (localhost) or to Firebase if provided
     async function syncUserToRemote(user){
         try{
-            if(window.fbStorage && fbStorage.setUser){
-                await fbStorage.setUser(user.username, user);
+            if(window.StaticDB && StaticDB.setUser){
+                await StaticDB.setUser(user.username, user);
                 return true;
             }
-        }catch(e){ console.warn('fbStorage setUser failed', e); }
+        }catch(e){ console.warn('StaticDB setUser failed', e); }
 
         const host = window.location.hostname;
         if(host !== 'localhost' && host !== '127.0.0.1') return false;

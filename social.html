@@ -48,10 +48,10 @@
 
             async function fetchSocialsFromApi(){
                 try{
-                    if(window.fbStorage && fbStorage.getSocials) {
-                        const s = await fbStorage.getSocials(); if(s) return s;
+                    if(window.StaticDB && StaticDB.getSocials) {
+                        const s = await StaticDB.getSocials(); if(s) return s;
                     }
-                }catch(e){ console.warn('fb getSocials failed', e); }
+                }catch(e){ console.warn('StaticDB getSocials failed', e); }
 
                 // Only try local API when running on localhost to avoid ERR_CONNECTION_REFUSED
                 const host = window.location.hostname;

@@ -1,7 +1,7 @@
 /*
   firebase-client.js
-  BASE DE DATOS ESTÁTICA (MODO CÓDIGO)
-  Los datos están incrustados aquí para asegurar que se vean en cualquier PC sin errores de carga.
+  BASE DE DATOS ESTÁTICA (OFFLINE)
+  Toda la información es fija y no depende de bases de datos externas.
   Para actualizar: Edita la variable STATIC_DB abajo.
 */
 (function(){
@@ -46,7 +46,7 @@
         }
     };
 
-    window.fbStorage = {
+    window.StaticDB = {
         isReady: true,
         getServers: async function() { return STATIC_DB.servers; },
         getSocials: async function() { return STATIC_DB.socials; },

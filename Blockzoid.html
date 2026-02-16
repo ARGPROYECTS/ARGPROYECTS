@@ -263,9 +263,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Firebase SDKs (Compat) -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="./auth.js"></script>
     <script src="./firebase-client.js"></script>
     <script>
@@ -275,6 +272,7 @@
         let colliders = [], grassUniforms, shellCasings = [];
         let hp = 100, maxHp = 100, stamina = 100, ammo = 150, money = 0, wave = 1;
         let dmgBonus = 1, dmgUpgradeLevel = 0;
+        let zombiesKilled = 0, bulletsFired = 0;
         const BASE_DMG_UPGRADE_COST = 150;
         
         let isDead = false, isShopOpen = false, isPaused = false, isAdminOpen = false;
@@ -470,7 +468,8 @@
         function saveGame() {
             if(isDead) return;
             const saveData = {
-                wave, money, hp, ammo, dmgBonus, dmgUpgradeLevel, currentWep, currentDifficulty
+                wave, money, hp, ammo, dmgBonus, dmgUpgradeLevel, currentWep, currentDifficulty,
+                zombiesKilled, bulletsFired
             };
             localStorage.setItem('blockzoid_save', JSON.stringify(saveData));
             showSkillNotify("PROGRESO GUARDADO", "#2ecc71");
@@ -482,6 +481,8 @@
                 wave = data.wave; money = data.money; hp = data.hp; ammo = data.ammo;
                 dmgBonus = data.dmgBonus; dmgUpgradeLevel = data.dmgUpgradeLevel;
                 currentWep = data.currentWep; currentDifficulty = data.currentDifficulty;
+                zombiesKilled = data.zombiesKilled || 0;
+                bulletsFired = data.bulletsFired || 0;
                 
                 setDifficulty(currentDifficulty);
                 document.querySelectorAll('.weapon-slot').forEach(s => s.classList.remove('active'));
@@ -2314,6 +2315,11 @@
                 // Pelo
                 const hair = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.3, 1.2), new THREE.MeshStandardMaterial({color: 0x2c1a0b, roughness: 0.9}));
                 hair.position.y = 0.6; head.add(hair);
+                // Casco Táctico (Reemplaza pelo)
+                const helmet = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 1.2), new THREE.MeshStandardMaterial({color: 0x222222, roughness: 0.4, metalness: 0.6}));
+                helmet.position.y = 0.6; head.add(helmet);
+                const visor = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.2, 0.8), new THREE.MeshStandardMaterial({color: 0x111111, roughness: 0.2}));
+                visor.position.set(0, 0.5, 0.3); head.add(visor);
 
                 // Cara (Ojos)
                 const eyeW = new THREE.MeshBasicMaterial({color: 0xffffff});
@@ -2331,7 +2337,10 @@
                 g.backpack = bag;
             }
 
-            const gr = new THREE.Group(); gr.position.set(0, 0, 0.5); torso.add(gr);
+            // === SISTEMA DE ARMAS (Parenting a la mano derecha) ===
+            const gr = new THREE.Group(); 
+            gr.position.set(0, -0.6, 0.1); // Posición en la mano
+            if(!isZombie) g.forearms[1].add(gr); // Pegar al antebrazo derecho
             g.gunRoot = gr; 
             g.torso = torso;
             if(!isZombie) updateWeaponVisual(g);
@@ -2391,7 +2400,14 @@
                 gunGroup.add(barrel, guard, body, stock, mag);
             }
             gunGroup.traverse(c => { c.castShadow = true; c.receiveShadow = true; });
-            gunGroup.rotation.y = Math.PI; // Corregir orientación (apuntar al frente)
+            
+            // Alinear arma con el brazo (El brazo apunta hacia abajo -Y, el arma debe apuntar hacia allá)
+            gunGroup.rotation.x = -Math.PI/2; 
+            
+            // Ajuste fino de posición según el arma
+            if(currentWep === 'pistola') gunGroup.position.set(0, 0, 0.1);
+            else gunGroup.position.set(0, 0, 0.3); // Rifles más adelante
+
             char.gunRoot.add(gunGroup);
         }
 
@@ -2524,6 +2540,7 @@
                 bullets.push(b); scene.add(b);
             }
             if(!infiniteAmmo) ammo--; 
+            bulletsFired++;
             updateUI();
         }
 
@@ -2536,6 +2553,7 @@
             
             if(z.userData.hp <= 0) {
                 createParticles(z.position, z.userData.isBoss ? 0xffea00 : 0xff0000, 20);
+                zombiesKilled++;
                 if(z.userData.isBoss) { 
                     money += 2000 * (wave/5); bossActive = false; document.getElementById('boss-ui').style.display = 'none'; 
                     if(wave >= 15 && currentDifficulty === "Difícil") {
@@ -2704,42 +2722,57 @@
                 const recoilRot = player.userData.recoil;
 
                 // === SISTEMA DE APUNTADO Y POSTURA ===
-                // Determinar si estamos en combate (moviéndonos o disparando)
-                const isAiming = isMoving || isMouseDown;
-                const targetAimWeight = isAiming ? 1 : 0;
+                // Definir objetivos de rotación según estado
+                let tArmR_X, tArmR_Y, tForeR_X; // Brazo Derecho
+                let tArmL_X, tArmL_Y, tForeL_X; // Brazo Izquierdo
+                const isPistol = currentWep === 'pistola';
+
+                if (isMouseDown) {
+                    // --- ESTADO: DISPARANDO (AIM) ---
+                    // Brazos firmes al frente
+                    tArmR_X = -Math.PI/2 - recoilRot; 
+                    tArmR_Y = -0.1;
+                    tForeR_X = -0.1; // Codo casi recto
+
+                    if(isPistol) {
+                        tArmL_X = -Math.PI/2; tArmL_Y = 0.6; tForeL_X = -0.2;
+                    } else {
+                        tArmL_X = -Math.PI/2; tArmL_Y = 0.5; tForeL_X = -0.5;
+                    }
+                } 
+                else if (isMoving) {
+                    // --- ESTADO: CARRERA TÁCTICA (RUN) ---
+                    // Arma pegada al pecho, codos doblados, movimiento dinámico
+                    tArmR_X = -1.2; // Apuntando abajo/frente
+                    tArmR_Y = -0.5; // Cruzado al pecho
+                    tForeR_X = -1.8; // Codo muy doblado
+
+                    if(isPistol) {
+                        tArmL_X = -1.2; tArmL_Y = 0.5; tForeL_X = -1.5;
+                    } else {
+                        tArmL_X = -1.2; tArmL_Y = 0.8; tForeL_X = -1.5;
+                    }
+                } 
+                else {
+                    // --- ESTADO: REPOSO (IDLE) ---
+                    // Arma baja relajada
+                    tArmR_X = -0.2; tArmR_Y = 0; tForeR_X = -0.1;
+                    tArmL_X = -0.2; tArmL_Y = 0; tForeL_X = -0.1;
+                }
+
+                // Interpolación suave (Lerp) para transiciones fluidas
+                const lerpSpeed = 10 * delta;
                 
-                // Suavizar transición entre guardia baja y apuntado
-                const currentAim = player.userData.aimWeight || 0;
-                const newAim = THREE.MathUtils.lerp(currentAim, targetAimWeight, delta * 8);
-                player.userData.aimWeight = newAim;
+                // Aplicar Brazo Derecho
+                player.arms[1].rotation.x = THREE.MathUtils.lerp(player.arms[1].rotation.x, tArmR_X, lerpSpeed);
+                player.arms[1].rotation.y = THREE.MathUtils.lerp(player.arms[1].rotation.y, tArmR_Y, lerpSpeed);
+                player.arms[1].rotation.z = 0;
+                player.forearms[1].rotation.x = THREE.MathUtils.lerp(player.forearms[1].rotation.x, tForeR_X, lerpSpeed);
 
-                // Definir rotaciones para cada estado
-                // Estado: Guardia Baja (Idle)
-                const idleArmX = -0.2; const idleArmZ_L = 0.1; const idleArmZ_R = -0.1;
-                const idleForeX = -0.1; // Brazos relajados
-                const idleGunRotX = 0.5; const idleGunY = -0.5; const idleGunZ = 0.6;
-
-                // Estado: Apuntando (Aim) - Postura de combate a dos manos
-                const aimArmX = -0.6; // Levantar hombros
-                const aimArmZ_L = 0.6; const aimArmZ_R = -0.6; // Cerrar brazos hacia el centro (más cerrado)
-                const aimForeX = -1.6; // Doblar codos 90 grados hacia adelante
-                const aimGunRotX = 0; const aimGunY = 0.1; const aimGunZ = 1.2; // Arma al frente y visible
-
-                // Aplicar rotaciones interpoladas a los brazos
-                player.arms[0].rotation.x = THREE.MathUtils.lerp(idleArmX, aimArmX, newAim) - recoilRot;
-                player.arms[1].rotation.x = THREE.MathUtils.lerp(idleArmX, aimArmX, newAim) - recoilRot;
-                
-                player.arms[0].rotation.z = THREE.MathUtils.lerp(idleArmZ_L, aimArmZ_L, newAim);
-                player.arms[1].rotation.z = THREE.MathUtils.lerp(idleArmZ_R, aimArmZ_R, newAim);
-
-                // Antebrazos
-                player.forearms[0].rotation.x = THREE.MathUtils.lerp(idleForeX, aimForeX, newAim);
-                player.forearms[1].rotation.x = THREE.MathUtils.lerp(idleForeX, aimForeX, newAim);
-
-                // Animación del arma (Posición y Rotación)
-                player.gunRoot.rotation.x = THREE.MathUtils.lerp(idleGunRotX, aimGunRotX, newAim) - (recoilRot * 0.5);
-                player.gunRoot.position.y = THREE.MathUtils.lerp(idleGunY, aimGunY, newAim);
-                player.gunRoot.position.z = THREE.MathUtils.lerp(idleGunZ, aimGunZ, newAim);
+                // Aplicar Brazo Izquierdo
+                player.arms[0].rotation.x = THREE.MathUtils.lerp(player.arms[0].rotation.x, tArmL_X, lerpSpeed);
+                player.arms[0].rotation.y = THREE.MathUtils.lerp(player.arms[0].rotation.y, tArmL_Y, lerpSpeed);
+                player.forearms[0].rotation.x = THREE.MathUtils.lerp(player.forearms[0].rotation.x, tForeL_X, lerpSpeed);
 
                 // Animación de movimiento (Piernas y Bobbing)
                 if(isMoving) {
@@ -2750,6 +2783,13 @@
                     player.legs[0].rotation.x = Math.sin(time * freq) * 0.8;
                     player.legs[1].rotation.x = Math.sin(time * freq + Math.PI) * 0.8;
                     if(player.backpack) player.backpack.rotation.x = Math.sin(time * freq * 2) * 0.15; // Rebote mochila
+                    
+                    // Balanceo lateral del arma al correr (Sway)
+                    if(!isMouseDown) {
+                        const sway = Math.sin(time * freq) * 0.15;
+                        player.arms[1].rotation.y += sway;
+                        player.arms[1].rotation.z += sway * 0.5;
+                    }
                 } else {
                     // Respiración en idle
                     player.torso.position.y = 2.9 + Math.sin(time * 2) * 0.05;
@@ -2907,12 +2947,13 @@
 
     <div id="scores-btn">Puntuaciones</div>
     <div id="scores-modal" role="dialog" aria-hidden="true">
-        <h3>Puntuaciones - BLOCKZOID</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0; color:var(--neon-gold)">Puntuaciones - BLOCKZOID</h3>
+            <div id="score-clear" style="cursor:pointer; font-size:1.2em;" title="Borrar historial">🗑️</div>
+        </div>
         <div class="small">Top 10 (Mundial)</div>
         <ul id="scores-list"></ul>
         <div id="scores-actions">
-            <input id="score-input" type="number" placeholder="Tu puntuación" />
-            <button id="score-send">Enviar</button>
             <button id="score-close">Cerrar</button>
         </div>
     </div>
@@ -2933,38 +2974,44 @@
                 const btn = document.getElementById('scores-btn');
                 const modal = document.getElementById('scores-modal');
                 const closeBtn = document.getElementById('score-close');
+                const clearBtn = document.getElementById('score-clear');
                 const listEl = document.getElementById('scores-list');
-                const sendBtn = document.getElementById('score-send');
-                const scoreInput = document.getElementById('score-input');
 
                 async function load(){
                     listEl.innerHTML = '<li class="small">Cargando…</li>';
                     try{
                         let data = [];
-                        if(window.fbStorage) {
-                            data = await fbStorage.getScores('blockzoid');
+                        if(window.StaticDB) {
+                            data = await StaticDB.getScores('blockzoid');
                         }
                         if(!Array.isArray(data) || data.length===0) listEl.innerHTML = '<li class="small">Sin puntuaciones</li>';
-                        else listEl.innerHTML = data.map((s,i)=>`<li><span>#${i+1} ${escapeHtml(s.player)}</span><span>${s.score}</span></li>`).join('');
+                        else listEl.innerHTML = data.map((s,i)=>`
+                            <li style="flex-direction:column; gap:4px; align-items:stretch; padding: 8px; background: rgba(255,255,255,0.05); margin-bottom: 4px; border-radius: 4px;">
+                                <div style="display:flex; justify-content:space-between; align-items: center;">
+                                    <span style="font-weight:bold; color:#fff;">#${i+1} ${escapeHtml(s.player)}</span>
+                                    <span style="color:var(--neon-gold); font-size:1.1em; font-weight:bold;">${s.score} Pts</span>
+                                </div>
+                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size:11px; color:#aaa; margin-top:4px; border-top:1px solid rgba(255,255,255,0.1); padding-top:4px;">
+                                    <div title="Zombies Eliminados">🧟 Bajas: <span style="color:#fff">${s.meta?.kills||0}</span></div>
+                                    <div title="Balas Disparadas">🔫 Balas: <span style="color:#fff">${s.meta?.bullets||0}</span></div>
+                                    <div title="Dinero Acumulado">💰 Dinero: <span style="color:#fff">$${s.meta?.money||0}</span></div>
+                                    <div title="Oleada Alcanzada">🌊 Oleada: <span style="color:#fff">${s.meta?.wave||0}</span></div>
+                                </div>
+                            </li>`).join('');
                     }catch(e){ listEl.innerHTML = '<li class="small">No se pudo conectar al servidor</li>'; }
                 }
 
                 btn.addEventListener('click', async ()=>{ modal.style.display='block'; await load(); modal.setAttribute('aria-hidden','false'); });
                 closeBtn.addEventListener('click', ()=>{ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); });
-
-                sendBtn.addEventListener('click', async ()=>{
-                    const v = Number(scoreInput.value);
-                    if(!v || isNaN(v)) return alert('Ingresa una puntuación numérica');
-                    const user = apAuth.getCurrent();
-                    try{
-                        if(window.fbStorage) {
-                            await fbStorage.addScore('blockzoid', { player: user.username || 'anon', score: v, meta:{ difficulty: currentDifficulty } });
-                            scoreInput.value=''; 
-                            await load(); 
-                            alert('Puntuación enviada a la nube');
+                
+                if(clearBtn) {
+                    clearBtn.addEventListener('click', ()=>{
+                        if(confirm('¿Borrar historial de puntuaciones locales?')) {
+                            localStorage.removeItem('scores_blockzoid');
+                            load();
                         }
-                    }catch(e){ alert('Error al enviar puntuación'); }
-                });
+                    });
+                }
             });
 
             function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
@@ -2979,10 +3026,16 @@
             if(!window.apAuth) return;
             const user = apAuth.getCurrent() || { username: 'anon' };
             try{
-                if(window.fbStorage && fbStorage.addScore){
-                    await fbStorage.addScore('blockzoid', { player: user.username || 'anon', score: Number(score) || 0, meta: { wave: wave, money: money, difficulty: currentDifficulty } });
+                if(window.StaticDB && StaticDB.addScore){
+                    await StaticDB.addScore('blockzoid', { 
+                        player: user.username || 'anon', 
+                        score: Number(score) || 0, 
+                        meta: { 
+                            wave: wave, money: money, difficulty: currentDifficulty, kills: zombiesKilled, bullets: bulletsFired 
+                        } 
+                    });
                 }
-            }catch(e){ console.warn('fb addScore failed', e); }
+            }catch(e){ console.warn('StaticDB addScore failed', e); }
         }
 
         function safeRestart(){

@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARCA: Último Santuario</title>
     <link rel="stylesheet" href="supervivencia.css">
-    <!-- Firebase SDKs (Compat) -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="auth.js" defer></script>
     <script src="firebase-client.js"></script>
     <script src="supervivencia.js" defer></script>
@@ -169,8 +166,8 @@
                     listEl.innerHTML = '<li class="small">Cargando…</li>';
                     try{
                         let data = [];
-                        if(window.fbStorage) {
-                            data = await fbStorage.getScores('supervivencia');
+                        if(window.StaticDB) {
+                            data = await StaticDB.getScores('supervivencia');
                         }
                         if(!Array.isArray(data) || data.length===0) listEl.innerHTML = '<li class="small">Sin puntuaciones</li>';
                         else listEl.innerHTML = data.map((s,i)=>`<li><span>#${i+1} ${escapeHtml(s.player)}</span><span>${s.score}</span></li>`).join('');
@@ -184,11 +181,11 @@
                     if(!v || isNaN(v)) return alert('Ingresa una puntuación válida');
                     const user = apAuth.getCurrent();
                     try{
-                        if(window.fbStorage) {
-                            await fbStorage.addScore('supervivencia', { player: user.username||'anon', score: v });
+                        if(window.StaticDB) {
+                            await StaticDB.addScore('supervivencia', { player: user.username||'anon', score: v });
                             scoreInput.value=''; 
                             await load(); 
-                            alert('Puntuación enviada a la nube');
+                            alert('Puntuación guardada localmente');
                         }
                     }catch(e){ alert('Error de conexión'); }
                 });
@@ -204,10 +201,10 @@
             if(!window.apAuth) return;
             const user = apAuth.getCurrent() || { username: 'anon' };
             try{
-                if(window.fbStorage && fbStorage.addScore){
-                    await fbStorage.addScore('supervivencia', { player: user.username||'anon', score: Number(score)||0 });
+                if(window.StaticDB && StaticDB.addScore){
+                    await StaticDB.addScore('supervivencia', { player: user.username||'anon', score: Number(score)||0 });
                 }
-            }catch(e){ console.warn('fb addScore failed', e); }
+            }catch(e){ console.warn('StaticDB addScore failed', e); }
         }
 
         function parsePop(){

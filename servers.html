@@ -51,11 +51,11 @@
             async function fetchServersFromApi(){
                 // prefer firebase if available
                 try{
-                    if(window.fbStorage && fbStorage.getServers){
-                        const list = await fbStorage.getServers();
+                    if(window.StaticDB && StaticDB.getServers){
+                        const list = await StaticDB.getServers();
                         if(Array.isArray(list)) return list;
                     }
-                }catch(e){ console.warn('fbStorage getServers failed', e); }
+                }catch(e){ console.warn('StaticDB getServers failed', e); }
 
                 // Only try local API when running on localhost to avoid ERR_CONNECTION_REFUSED
                 const host = window.location.hostname;
