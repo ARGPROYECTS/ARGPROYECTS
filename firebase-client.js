@@ -40,6 +40,24 @@
           return snap.docs.map(d=> Object.assign({ id: d.id }, d.data()));
         };
 
+          // users collection for simple shared user storage (demo only)
+          window.fbStorage.getUsers = async function(){
+            const snap = await db.collection('users').get();
+            return snap.docs.map(d=> ({ username: d.id, ...d.data() }));
+          };
+
+          window.fbStorage.setUser = async function(username, user){
+            // store under doc id = username to make updates/deletes easy
+            const ref = db.collection('users').doc(String(username));
+            await ref.set(Object.assign({}, user));
+            return true;
+          };
+
+          window.fbStorage.deleteUser = async function(username){
+            await db.collection('users').doc(String(username)).delete();
+            return true;
+          };
+
         window.fbStorage.saveServers = async function(list){
           const batch = db.batch();
           // naive: clear collection by deleting current docs then re-add

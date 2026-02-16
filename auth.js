@@ -14,12 +14,55 @@
         return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
     }
 
+    const API_BASE = window.AP_API_BASE || 'http://localhost:3000';
+
     function getUsers(){
         try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
         catch(e){ return []; }
     }
 
     function saveUsers(users){ localStorage.setItem(STORAGE_KEY, JSON.stringify(users)); }
+
+    // Attempt to fetch users from remote backends (Firebase preferred, then local API on localhost)
+    async function fetchUsersFromRemote(){
+        try{
+            if(window.fbStorage && fbStorage.getUsers){
+                const u = await fbStorage.getUsers(); if(Array.isArray(u)) return u;
+            }
+        }catch(e){ console.warn('fbStorage getUsers failed', e); }
+
+        const host = window.location.hostname;
+        if(host !== 'localhost' && host !== '127.0.0.1') return null;
+
+        try{
+            const r = await fetch(API_BASE + '/users');
+            if(!r.ok) throw new Error('bad');
+            const data = await r.json();
+            if(Array.isArray(data)){
+                saveUsers(data);
+                return data;
+            }
+        }catch(e){ console.warn('API users fetch failed', e); }
+        return null;
+    }
+
+    // Sync a single user to remote API when available (localhost) or to Firebase if provided
+    async function syncUserToRemote(user){
+        try{
+            if(window.fbStorage && fbStorage.setUser){
+                await fbStorage.setUser(user.username, user);
+                return true;
+            }
+        }catch(e){ console.warn('fbStorage setUser failed', e); }
+
+        const host = window.location.hostname;
+        if(host !== 'localhost' && host !== '127.0.0.1') return false;
+
+        try{
+            await fetch(API_BASE + '/users', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify(user) });
+            return true;
+        }catch(e){ console.warn('sync user to API failed', e); return false; }
+    }
 
     function getCurrent(){
         try{ return JSON.parse(localStorage.getItem(CURRENT_KEY) || 'null'); }
@@ -85,18 +128,24 @@
     async function register(username, password){
         username = (username||'').trim();
         if(!username || !password) return {ok:false, msg:'Usuario y clave requeridos.'};
+        // try remote first (will save locally if found)
+        await fetchUsersFromRemote();
         const users = getUsers();
         if(users.find(u=>u.username.toLowerCase()===username.toLowerCase())) return {ok:false, msg:'Usuario ya existe.'};
         const pass = await hash(password);
         const role = users.length===0 ? 'admin' : 'user'; // first user becomes admin
         users.push({username, pass, role});
         saveUsers(users);
+        // attempt to sync to remote backend
+        syncUserToRemote({ username, pass, role }).catch(()=>{});
         return {ok:true, msg:'Registrado', role};
     }
 
     async function login(username, password){
         username = (username||'').trim();
         if(!username || !password) return {ok:false, msg:'Usuario y clave requeridos.'};
+        // refresh users from remote if available
+        await fetchUsersFromRemote();
         const users = getUsers();
         const user = users.find(u=>u.username.toLowerCase()===username.toLowerCase());
         if(!user) return {ok:false, msg:'Usuario no encontrado.'};
@@ -133,6 +182,8 @@
         if(!u) return false;
         u.role = role;
         saveUsers(users);
+        // attempt remote sync
+        syncUserToRemote(u).catch(()=>{});
         const cur = getCurrent();
         if(cur && cur.username===username) setCurrent({username:cur.username, role});
         return true;
@@ -142,6 +193,8 @@
         let users = getUsers();
         users = users.filter(u=>u.username!==username);
         saveUsers(users);
+        // attempt remote delete
+        try{ const host = window.location.hostname; if(host==='localhost' || host==='127.0.0.1') fetch(API_BASE + '/users/' + encodeURIComponent(username), { method:'DELETE' }).catch(()=>{}); }catch(e){}
         const cur = getCurrent(); if(cur && cur.username===username) logout();
         return true;
     }

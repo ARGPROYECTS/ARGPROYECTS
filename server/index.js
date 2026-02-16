@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 
 const SERVERS_PATH = path.join(__dirname, 'data', 'servers.json');
 const SOCIALS_PATH = path.join(__dirname, 'data', 'socials.json');
+const USERS_PATH = path.join(__dirname, 'data', 'users.json');
 
 function loadScores() {
   try {
@@ -100,6 +101,32 @@ app.post('/socials', (req, res) => {
   all[body.key] = Object.assign({}, all[body.key]||{}, body.data||{});
   saveJson(SOCIALS_PATH, all);
   res.json({ ok:true, key: body.key, data: all[body.key] });
+});
+
+// Users endpoints - allow clients to share simple user lists (demo only, not secure)
+app.get('/users', (req, res) => {
+  const data = loadJson(USERS_PATH, []);
+  res.json(data);
+});
+
+app.post('/users', (req, res) => {
+  const body = req.body;
+  if(!body || !body.username || !body.pass) return res.status(400).json({ error: 'invalid body' });
+  const list = loadJson(USERS_PATH, []);
+  const username = String(body.username);
+  const idx = list.findIndex(x=>String(x.username).toLowerCase()===username.toLowerCase());
+  const item = { username: username, pass: String(body.pass), role: body.role || 'user' };
+  if(idx >= 0) list[idx] = item; else list.push(item);
+  saveJson(USERS_PATH, list);
+  res.json({ ok:true, item });
+});
+
+app.delete('/users/:username', (req, res) => {
+  const username = req.params.username;
+  let list = loadJson(USERS_PATH, []);
+  list = list.filter(x=>String(x.username).toLowerCase()!==String(username).toLowerCase());
+  saveJson(USERS_PATH, list);
+  res.json({ ok:true });
 });
 
 app.listen(PORT, () => console.log(`AP server listening on http://localhost:${PORT}`));
