@@ -2,6 +2,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Referencias a los nuevos botones
     const btnBlockzoid = document.getElementById('btn-play-blockzoid');
     const btnSupervivencia = document.getElementById('btn-play-supervivencia');
+    const btnMenuJuegos = document.getElementById('btn-menu-juegos');
+    const btnMenuServidores = document.getElementById('btn-menu-servidores');
+    const juegosPanel = document.getElementById('juegos-panel');
+
+    // Ocultar los botones de los juegos por defecto
+    if (juegosPanel) {
+        juegosPanel.style.display = 'none';
+    }
+    if (btnMenuJuegos) {
+        btnMenuJuegos.classList.remove('active');
+    }
 
     // Función de navegación para Blockzoid
     if (btnBlockzoid) {
@@ -9,6 +20,29 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Navegando a Blockzoid...");
             // Usamos el nombre del archivo proporcionado en tu contexto
             window.location.href = 'Blockzoid.html';
+        });
+    }
+
+    // Mostrar panel de Juegos (si existe)
+    if (btnMenuJuegos && juegosPanel) {
+        btnMenuJuegos.addEventListener('click', () => {
+            // activar visual
+            btnMenuJuegos.classList.add('active');
+            if (btnMenuServidores) btnMenuServidores.classList.remove('active');
+            // asegurarnos de que el panel de juegos esté visible
+            juegosPanel.style.display = 'block';
+        });
+    }
+
+    // Redirigir a servers.html cuando se pulsa Servidores
+    if (btnMenuServidores) {
+        btnMenuServidores.addEventListener('click', () => {
+            // ocultar panel de juegos si estaba visible
+            if (juegosPanel) juegosPanel.style.display = 'none';
+            if (btnMenuJuegos) btnMenuJuegos.classList.remove('active');
+            btnMenuServidores.classList.add('active');
+            // redirigir a servers
+            window.location.href = 'servers.html';
         });
     }
 
