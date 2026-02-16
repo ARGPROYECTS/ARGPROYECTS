@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Admin - ARGPROYECTS</title>
+    <link rel="stylesheet" href="./menu_principal.css">
+</head>
+<body>
+    <div id="menu-background">
+        <div class="overlay"></div>
+        <main class="admin-area">
+            <h2>Panel de administración</h2>
+            <p class="muted">Solo accesible para usuarios con rol <strong>admin</strong>.</p>
+
+            <div class="admin-actions">
+                <button id="btn-logout" class="btn-main" style="background:#6b2b2b;">Cerrar sesión</button>
+                <button id="btn-back" class="btn-main">Volver</button>
+            </div>
+
+            <section class="admin-users">
+                <h3>Usuarios registrados</h3>
+                <table id="users-table">
+                    <thead><tr><th>Usuario</th><th>Rol</th><th>Acciones</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+            
+            <!-- Gestión de servidores movida a la página pública de Servidores -->
+        </main>
+        <footer id="signature">Hecho por Alvaro Restrepo</footer>
+    </div>
+
+    <script src="./auth.js"></script>
+    <script>
+        (function(){
+            const cur = apAuth.getCurrent();
+            if(!cur || cur.role!=='admin'){
+                alert('Acceso restringido: necesitas rol de admin.');
+                location.href = 'login.html';
+                return;
+            }
+
+            const tbody = document.querySelector('#users-table tbody');
+            function render(){
+                const users = apAuth.listUsers();
+                tbody.innerHTML = '';
+                users.forEach(u=>{
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${u.username}</td>
+                        <td>
+                            <select data-user="${u.username}" class="role-select">
+                                <option value="user" ${u.role==='user'?'selected':''}>user</option>
+                                <option value="editor" ${u.role==='editor'?'selected':''}>editor</option>
+                                <option value="admin" ${u.role==='admin'?'selected':''}>admin</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn-small btn-delm" data-user="${u.username}">Eliminar</button>
+                        </td>`;
+                    tbody.appendChild(tr);
+                });
+                Array.from(document.querySelectorAll('.role-select')).forEach(sel=>{
+                    sel.addEventListener('change', e=>{
+                        const user = e.target.dataset.user;
+                        apAuth.setRole(user, e.target.value);
+                        render();
+                    });
+                });
+                Array.from(document.querySelectorAll('.btn-delm')).forEach(b=>{
+                    b.addEventListener('click', e=>{
+                        const user = e.target.dataset.user;
+                        if(confirm('Eliminar usuario '+user+'?')){ apAuth.deleteUser(user); render(); }
+                    });
+                });
+            }
+            render();
+
+            // Nota: gestión de servidores movida a servers.html
+
+            document.getElementById('btn-logout').addEventListener('click', ()=>{ apAuth.logout(); location.href='menu_principal.html';});
+            document.getElementById('btn-back').addEventListener('click', ()=> location.href='menu_principal.html');
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Login - ARGPROYECTS</title>
+    <link rel="stylesheet" href="./menu_principal.css">
+</head>
+<body>
+    <div id="menu-background">
+        <div class="overlay"></div>
+        <div class="login-card">
+            <h2>Acceso / Registro</h2>
+            <p class="muted">Regístrate solo si quieres control para admin/editor. No obligatorio.</p>
+
+            <div class="form-row">
+                <label>Usuario</label>
+                <input id="u-username" type="text" autocomplete="username">
+            </div>
+            <div class="form-row">
+                <label>Clave</label>
+                <input id="u-password" type="password" autocomplete="current-password">
+            </div>
+
+            <div class="form-actions">
+                <button id="btn-login" class="btn-main">Entrar</button>
+                <button id="btn-register" class="btn-main alt">Registrar</button>
+                <button id="btn-back" class="btn-main" style="background:#444;">Volver</button>
+            </div>
+
+            <div id="login-msg" class="muted" style="margin-top:12px"></div>
+        </div>
+        <footer id="signature">Hecho por Alvaro Restrepo</footer>
+    </div>
+
+    <script src="./auth.js"></script>
+    <script>
+        const $ = id=>document.getElementById(id);
+        $('btn-back').addEventListener('click', ()=> location.href='menu_principal.html');
+
+        $('btn-register').addEventListener('click', async ()=>{
+            const u = $('u-username').value.trim();
+            const p = $('u-password').value;
+            const res = await apAuth.register(u,p);
+            $('login-msg').textContent = res.msg;
+            if(res.ok) setTimeout(()=> location.href='menu_principal.html', 900);
+        });
+
+        $('btn-login').addEventListener('click', async ()=>{
+            const u = $('u-username').value.trim();
+            const p = $('u-password').value;
+            const res = await apAuth.login(u,p);
+            $('login-msg').textContent = res.msg;
+            if(res.ok){ setTimeout(()=>{
+                if(res.role==='admin') location.href='admin.html'; else location.href='menu_principal.html';
+            },600);} 
+        });
+    </script>
+</body>
+</html>

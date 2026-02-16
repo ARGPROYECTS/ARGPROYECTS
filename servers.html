@@ -12,84 +12,180 @@
 
         <header class="servers-hero">
             <div class="hero-left">
-                <h1 class="title-glow">ARGPROYECTS</h1>
-                <h2 class="subtitle">Servidores ARG Proyects</h2>
-            </div>
-            <div class="hero-right">
-                <div class="game-badge">
-                    <!-- simple block-style SVG to evoke Minecraft -->
-                    <svg width="56" height="56" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <rect width="64" height="40" y="8" rx="6" fill="#6db33f"/>
-                        <rect width="64" height="16" y="40" fill="#8b5a2b"/>
-                    </svg>
-                </div>
+                <h1 class="title-glow">SERVIDORES</h1>
+                <h2 class="subtitle">Lista de servidores</h2>
             </div>
         </header>
 
         <main class="servers-area">
-            <section class="server-card feature">
-                <div class="card-left">
-                    <h3 class="server-name">Minecraft ARGServer — Servidor con Mods</h3>
-                    <p class="server-desc">Un servidor estable con mods seleccionados para una experiencia cooperativa y competitiva. Comunidad activa, eventos y soporte en Discord.</p>
-
-                    <div class="server-meta">
-                        <div class="status">
-                            <span class="status-dot online"></span>
-                            <strong>En línea</strong>
-                        </div>
-                        <div class="players">
-                            <strong id="players-count">2</strong>
-                            <span>jugadores conectados</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-right">
-                    <div class="ip-box">
-                        <div class="ip-label">Dirección</div>
-                        <div class="ip-value"><code id="server-ip">181.137.6.163:25565</code></div>
-                        <button id="copy-ip" class="btn-small">Copiar</button>
-                    </div>
-
-                    <ul class="server-links">
-                        <li><strong>Versión:</strong> 1.20.1 (Forge)</li>
-                        <li><strong>Modpack:</strong> <a href="https://www.mediafire.com/file/w6z571uhaa08is4/mods+V1.2.zip/file" target="_blank" rel="noopener">Descargar v1.2</a></li>
-                        <li><strong>Discord:</strong> <a href="https://discord.gg/J5BPsRugjQ" target="_blank" rel="noopener">Únete al servidor</a></li>
-                    </ul>
-
-                    <div class="server-actions">
-                        <button onclick="location.href='menu_principal.html'" class="btn-main">Volver al Menú</button>
-                        <button id="copy-ip-2" class="btn-main alt">Copiar IP</button>
-                    </div>
-                </div>
-            </section>
+            <div id="servers-list" class="server-grid">
+                <!-- servidores se renderizan aquí dinámicamente -->
+            </div>
         </main>
 
         <footer id="signature">Hecho por Alvaro Restrepo</footer>
     </div>
 
+    <script src="./auth.js"></script>
     <script>
-        // Copiar la IP al portapapeles y mostrar feedback breve
-        (function(){
-            const copyBtn = document.getElementById('copy-ip');
-            const copyBtn2 = document.getElementById('copy-ip-2');
-            const ipEl = document.getElementById('server-ip');
+        // Diagnostics
+        console.log('servers.js loaded', { apAuth: typeof apAuth, current: (window.apAuth && apAuth.getCurrent)? apAuth.getCurrent() : null });
 
-            function copyIP(button){
-                if(!ipEl) return;
-                const ip = ipEl.textContent.trim();
-                navigator.clipboard?.writeText(ip).then(()=>{
-                    const original = button.textContent;
-                    button.textContent = 'Copiado!';
-                    setTimeout(()=> button.textContent = original, 1600);
-                }).catch(()=>{
-                    alert('No se pudo copiar. IP: ' + ip);
-                });
+        // Renderizar lista de servidores y añadir funcionalidad (copiar IP, abrir enlaces, editar para admins)
+        (function(){
+            try{
+            function makeCard(s){
+                const card = document.createElement('section');
+                card.className = 'server-card feature';
+                card.innerHTML = `
+                    <div class="card-left">
+                        <h3 class="server-name">${escapeHtml(s.name || 'Servidor')}</h3>
+                        <p class="server-desc">${escapeHtml(s.desc || '')}</p>
+                        <div class="server-meta">
+                            <div class="status"><span class="status-dot ${s.online? 'online':''}"></span><strong>${s.online? 'En línea':'Desconocido'}</strong></div>
+                            <div class="players"><strong>${s.players||0}</strong><span> jugadores conectados</span></div>
+                        </div>
+                    </div>
+                    <div class="card-right">
+                        <div class="ip-box">
+                            <div class="ip-label">Dirección</div>
+                            <div class="ip-value"><code class="server-ip">${escapeHtml(s.ip || '')}</code></div>
+                            <button class="btn-small btn-copy-ip">Copiar</button>
+                        </div>
+                        <ul class="server-links">
+                            <li><strong>Versión:</strong> ${escapeHtml(s.version || '')}</li>
+                            ${s.modpack? `<li><strong>Modpack:</strong> <a href="${escapeAttr(s.modpack)}" target="_blank" rel="noopener">Descargar</a></li>` : ''}
+                            ${s.discord? `<li><strong>Discord:</strong> <a href="${escapeAttr(s.discord)}" target="_blank" rel="noopener">Únete</a></li>` : ''}
+                        </ul>
+                        <div class="server-actions">
+                            <button onclick="location.href='menu_principal.html'" class="btn-main">Volver al Menú</button>
+                            <button class="btn-main alt btn-copy-ip-2">Copiar IP</button>
+                            ${isAdmin? '<button class="btn-small sv-edit-inline" data-id="'+s.id+'">Editar</button>' : ''}
+                        </div>
+                    </div>`;
+                return card;
             }
 
-            if(copyBtn) copyBtn.addEventListener('click', ()=> copyIP(copyBtn));
-            if(copyBtn2) copyBtn2.addEventListener('click', ()=> copyIP(copyBtn2));
+            function escapeHtml(str){ return (str+'').replace(/[&<>\"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+            function escapeAttr(s){ return (s||'').replace(/"/g,'"'); }
+
+            const container = document.getElementById('servers-list');
+            const isAdmin = !!(window.apAuth && apAuth.getCurrent && apAuth.getCurrent() && apAuth.getCurrent().role==='admin');
+            // if admin, add quick controls to header
+            if(isAdmin){
+                try{
+                    const hdr = document.querySelector('.servers-hero');
+                    if(hdr && !document.getElementById('admin-controls')){
+                        const ctrl = document.createElement('div'); ctrl.id='admin-controls'; ctrl.className='admin-controls';
+                        ctrl.innerHTML = '<button id="admin-add-server" class="btn-main">Agregar servidor</button> <button id="admin-panel" class="btn-main alt">Panel Admin</button>';
+                        hdr.appendChild(ctrl);
+                        document.getElementById('admin-panel').addEventListener('click', ()=> location.href='admin.html');
+                        document.getElementById('admin-add-server').addEventListener('click', ()=> openAddModal());
+                    }
+                }catch(e){ console.warn('no se pudo insertar controles admin', e); }
+            }
+            const list = (window.apAuth && apAuth.getServers) ? apAuth.getServers() : [];
+            console.log('servers list loaded, count=', list.length, { isAdmin });
+            if(!list || list.length===0){ container.innerHTML = '<p class="muted">No hay servidores publicados todavía.</p>'; }
+            else{
+                container.innerHTML = '';
+                list.forEach(s=>{
+                    const card = makeCard(s);
+                    container.appendChild(card);
+                });
+
+                if(isAdmin){
+                    // add handlers for inline edit buttons
+                    Array.from(container.querySelectorAll('.sv-edit-inline')).forEach(b=>{
+                        b.addEventListener('click', e=>{
+                            const id = e.target.dataset.id;
+                            const s = apAuth.getServers().find(x=>x.id===id);
+                            if(!s) return;
+                            openEditModal(s);
+                        });
+                    });
+                }
+
+                // eventos copiar
+                Array.from(container.querySelectorAll('.btn-copy-ip')).forEach(b=>{
+                    b.addEventListener('click', ()=>{
+                        const ip = b.closest('.card-right').querySelector('.server-ip').textContent.trim();
+                        navigator.clipboard?.writeText(ip).then(()=>{ const orig=b.textContent; b.textContent='Copiado!'; setTimeout(()=>b.textContent=orig,1400); }).catch(()=>alert('No se pudo copiar: '+ip));
+                    });
+                });
+                Array.from(container.querySelectorAll('.btn-copy-ip-2')).forEach(b=>{
+                    b.addEventListener('click', ()=>{
+                        const ip = b.closest('.card-right').querySelector('.server-ip').textContent.trim();
+                        navigator.clipboard?.writeText(ip).then(()=>{ const orig=b.textContent; b.textContent='Copiado!'; setTimeout(()=>b.textContent=orig,1400); }).catch(()=>alert('No se pudo copiar: '+ip));
+                    });
+                });
+            }
+            }catch(err){ console.error('Error rendering servers list', err); document.getElementById('servers-list').innerHTML = '<p class="muted">Error al cargar servidores. Revisa la consola.</p>'; }
         })();
+
+        // --- inline edit modal for admins ---
+        function openEditModal(server){
+            // create modal
+            let modal = document.getElementById('sv-edit-modal');
+            if(modal) modal.remove();
+            modal = document.createElement('div'); modal.id='sv-edit-modal'; modal.className='edit-modal';
+            modal.innerHTML = `
+                <div class="modal-card">
+                    <h3>Editar servidor</h3>
+                    <input id="m-name" placeholder="Nombre" value="${escapeHtml(server.name||'')}">
+                    <input id="m-ip" placeholder="IP:puerto" value="${escapeHtml(server.ip||'')}">
+                    <input id="m-version" placeholder="Versión" value="${escapeHtml(server.version||'')}">
+                    <input id="m-modpack" placeholder="URL modpack" value="${escapeHtml(server.modpack||'')}">
+                    <input id="m-discord" placeholder="URL discord" value="${escapeHtml(server.discord||'')}">
+                    <textarea id="m-desc" placeholder="Descripción">${escapeHtml(server.desc||'')}</textarea>
+                    <div class="modal-actions">
+                        <button id="m-save" class="btn-main">Guardar</button>
+                        <button id="m-cancel" class="btn-main alt">Cancelar</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            document.getElementById('m-cancel').addEventListener('click', ()=> modal.remove());
+            document.getElementById('m-save').addEventListener('click', ()=>{
+                const data = { name: document.getElementById('m-name').value.trim(), ip: document.getElementById('m-ip').value.trim(), version: document.getElementById('m-version').value.trim(), modpack: document.getElementById('m-modpack').value.trim(), discord: document.getElementById('m-discord').value.trim(), desc: document.getElementById('m-desc').value.trim() };
+                if(!data.name || !data.ip){ alert('Nombre e IP son requeridos'); return; }
+                apAuth.updateServer(server.id, data);
+                modal.remove();
+                // re-render by reloading page
+                location.reload();
+            });
+        }
+
+        // open add modal for admins
+        function openAddModal(){
+            let modal = document.getElementById('sv-edit-modal');
+            if(modal) modal.remove();
+            modal = document.createElement('div'); modal.id='sv-edit-modal'; modal.className='edit-modal';
+            modal.innerHTML = `
+                <div class="modal-card">
+                    <h3>Agregar servidor</h3>
+                    <input id="m-name" placeholder="Nombre" value="">
+                    <input id="m-ip" placeholder="IP:puerto" value="">
+                    <input id="m-version" placeholder="Versión" value="">
+                    <input id="m-modpack" placeholder="URL modpack" value="">
+                    <input id="m-discord" placeholder="URL discord" value="">
+                    <textarea id="m-desc" placeholder="Descripción"></textarea>
+                    <div class="modal-actions">
+                        <button id="m-save" class="btn-main">Agregar</button>
+                        <button id="m-cancel" class="btn-main alt">Cancelar</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            document.getElementById('m-cancel').addEventListener('click', ()=> modal.remove());
+            document.getElementById('m-save').addEventListener('click', ()=>{
+                const data = { name: document.getElementById('m-name').value.trim(), ip: document.getElementById('m-ip').value.trim(), version: document.getElementById('m-version').value.trim(), modpack: document.getElementById('m-modpack').value.trim(), discord: document.getElementById('m-discord').value.trim(), desc: document.getElementById('m-desc').value.trim() };
+                if(!data.name || !data.ip){ alert('Nombre e IP son requeridos'); return; }
+                apAuth.addServer(data);
+                modal.remove();
+                location.reload();
+            });
+        }
+
+        function escapeHtml(str){ return (str+'').replace(/[&<>\"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
         // Diagnóstico: comprobar si CSS cargó
         (function(){

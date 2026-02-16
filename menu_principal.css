@@ -7,6 +7,7 @@ body, html {
     background-color: #0a0a0a;
     color: white;
     overflow: hidden;
+    padding-top: 72px; /* evita que el contenido quede debajo del login fijo */
 }
 
 #menu-background {
@@ -35,6 +36,8 @@ body, html {
     margin-bottom: 50px;
     z-index: 10;
 }
+
+#title-container { position: relative; }
 
 .title-glow {
     font-size: clamp(2.5rem, 8vw, 5rem);
@@ -171,10 +174,40 @@ body, html {
 .btn-small { padding: 6px 10px; font-size: 0.85rem; border-radius: 6px; border: none; cursor: pointer; background: rgba(255,255,255,0.06); color: #fff; }
 .btn-small:hover { background: rgba(255,255,255,0.12); }
 
+/* Login/Admin styles */
+.login-card { max-width:420px; margin:60px auto 24px; background: rgba(0,0,0,0.45); padding:20px; border-radius:10px; text-align:left; }
+.login-card h2 { margin-top:0; color:#ffd1a9; }
+.muted { color:#bdbdbd; }
+.form-row { margin:10px 0; display:flex; flex-direction:column; }
+.form-row input { padding:10px; border-radius:6px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:white; }
+.form-actions { display:flex; gap:8px; margin-top:10px; }
+
+.user-area { display:flex; gap:8px; align-items:center; position:fixed; top:12px; right:20px; background: rgba(0,0,0,0.28); padding:8px 12px; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.5); }
+.user-area .muted { color:#ddd; margin-right:8px; font-size:0.95rem; }
+.user-area a.btn-small, .user-area button.btn-small { padding:6px 8px; font-size:0.8rem; }
+.user-area { z-index: 9999; color: #fff; }
+
+.admin-area { max-width:900px; margin:40px auto; padding:20px; }
+.admin-area h2 { color:#ffd1a9; }
+.admin-actions { display:flex; gap:10px; margin-bottom:14px; }
+#users-table { width:100%; border-collapse:collapse; background: rgba(0,0,0,0.25); }
+#users-table th, #users-table td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.04); }
+
+/* admin servers table and form */
+.server-form input, .server-form textarea { width:100%; padding:8px; margin:6px 0; border-radius:6px; background:transparent; border:1px solid rgba(255,255,255,0.06); color:#fff; }
+.server-form textarea { min-height:60px; resize:vertical; }
+.server-form .btn-main { margin-top:6px; }
+#servers-table th, #servers-table td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.04); }
+.sv-edit, .sv-del { margin-right:6px; }
+
+
 /* Advanced server styles */
 .servers-hero { display:flex; justify-content:space-between; align-items:center; width:100%; padding:28px 48px; box-sizing:border-box; }
 .servers-hero .title-glow { text-shadow: 0 0 18px #9b4d4d; font-size: 2rem; }
 .servers-area { width:100%; display:flex; justify-content:center; padding:24px; box-sizing:border-box; }
+
+.admin-controls { position:absolute; right:28px; top:22px; display:flex; gap:8px; align-items:center; z-index:1000; }
+.admin-controls .btn-main { padding:8px 10px; font-size:0.9rem; }
 .server-card.feature { display:flex; gap:24px; align-items:flex-start; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.04); padding:20px; border-radius:12px; max-width:1000px; width:92%; }
 .card-left { flex:1 1 60%; }
 .card-right { flex:0 0 320px; display:flex; flex-direction:column; gap:14px; align-items:flex-end; }
@@ -193,6 +226,18 @@ body, html {
 .server-links a { color:#9ad1ff; }
 .server-actions { display:flex; gap:10px; margin-top:6px; }
 .btn-main.alt { background:#2b2b2b; color:#fff; }
+
+/* grid for multiple servers */
+.server-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; width:100%; padding:16px 24px; box-sizing:border-box; }
+.server-card.feature .card-right { align-items:flex-end; }
+.server-card.feature .server-actions { justify-content:flex-end; }
+
+/* Edit modal */
+.edit-modal { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:10000; }
+.modal-card { background: linear-gradient(180deg, rgba(20,20,20,0.95), rgba(10,10,10,0.98)); padding:18px; border-radius:10px; width:420px; box-shadow:0 10px 40px rgba(0,0,0,0.7); }
+.modal-card h3 { margin-top:0; color:#ffd1a9; }
+.modal-card input, .modal-card textarea { width:100%; padding:8px; margin:6px 0; border-radius:6px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:#fff; }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
 
 @media (max-width: 780px) {
     .server-card.feature { flex-direction:column; align-items:stretch; }
