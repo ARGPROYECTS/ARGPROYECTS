@@ -1,0 +1,11 @@
+[
+  {
+    "id": "srv1",
+    "name": "Servidor Principal",
+    "ip": "play.ejemplo.com",
+    "desc": "Servidor oficial de la comunidad.",
+    "players": 10,
+    "map": "Mundo Base",
+    "online": true
+  }
+]

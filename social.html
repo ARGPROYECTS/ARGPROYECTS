@@ -123,9 +123,10 @@
                     const data = { tagline: document.getElementById('s-title').value.trim(), link: document.getElementById('s-link').value.trim(), desc: document.getElementById('s-desc').value.trim() };
                     if(!data.link){ if(!confirm('La URL está vacía. Guardar de todos modos?')) return; }
                     
-                    if(window.fbStorage && fbStorage.setSocial) {
+                    if(window.fbStorage && fbStorage.isReady) {
                         fbStorage.setSocial(site, data);
                     } else {
+                        if(!confirm("⚠️ No hay conexión con la nube. ¿Guardar solo localmente?")) return;
                         apAuth.setSocial(site, data);
                     }
                     modal.remove();

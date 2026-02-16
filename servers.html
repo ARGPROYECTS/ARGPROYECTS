@@ -188,9 +188,10 @@
                 const data = { name: document.getElementById('m-name').value.trim(), ip: document.getElementById('m-ip').value.trim(), version: document.getElementById('m-version').value.trim(), modpack: document.getElementById('m-modpack').value.trim(), discord: document.getElementById('m-discord').value.trim(), desc: document.getElementById('m-desc').value.trim() };
                 if(!data.name || !data.ip){ alert('Nombre e IP son requeridos'); return; }
                 
-                if(window.fbStorage && fbStorage.updateServer) {
+                if(window.fbStorage && fbStorage.isReady) {
                     await fbStorage.updateServer(server.id, data);
                 } else {
+                    if(!confirm("⚠️ No hay conexión con la nube. ¿Guardar solo localmente? (No será visible en otros PC)")) return;
                     apAuth.updateServer(server.id, data); // Fallback local
                 }
                 modal.remove();
@@ -223,9 +224,10 @@
                 const data = { name: document.getElementById('m-name').value.trim(), ip: document.getElementById('m-ip').value.trim(), version: document.getElementById('m-version').value.trim(), modpack: document.getElementById('m-modpack').value.trim(), discord: document.getElementById('m-discord').value.trim(), desc: document.getElementById('m-desc').value.trim() };
                 if(!data.name || !data.ip){ alert('Nombre e IP son requeridos'); return; }
                 
-                if(window.fbStorage && fbStorage.addServer) {
+                if(window.fbStorage && fbStorage.isReady) {
                     await fbStorage.addServer(data);
                 } else {
+                    if(!confirm("⚠️ No hay conexión con la nube. ¿Guardar solo localmente? (No será visible en otros PC)")) return;
                     apAuth.addServer(data); // Fallback local
                 }
                 modal.remove();
