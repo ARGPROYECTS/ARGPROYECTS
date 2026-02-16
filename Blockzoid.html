@@ -263,6 +263,9 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Firebase SDKs (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="./auth.js"></script>
     <script src="./firebase-client.js"></script>
     <script>
@@ -2905,7 +2908,7 @@
     <div id="scores-btn">Puntuaciones</div>
     <div id="scores-modal" role="dialog" aria-hidden="true">
         <h3>Puntuaciones - BLOCKZOID</h3>
-        <div class="small">Top 10 (servidor local)</div>
+        <div class="small">Top 10 (Mundial)</div>
         <ul id="scores-list"></ul>
         <div id="scores-actions">
             <input id="score-input" type="number" placeholder="Tu puntuación" />
@@ -2916,7 +2919,6 @@
 
     <script>
         (function(){
-            const API_BASE = 'http://localhost:3000';
             function requireLogin(){
                 if(!window.apAuth || !apAuth.getCurrent()){
                     location.href = 'login.html';
@@ -2938,8 +2940,10 @@
                 async function load(){
                     listEl.innerHTML = '<li class="small">Cargando…</li>';
                     try{
-                        const r = await fetch(`${API_BASE}/scores/blockzoid`);
-                        const data = await r.json();
+                        let data = [];
+                        if(window.fbStorage) {
+                            data = await fbStorage.getScores('blockzoid');
+                        }
                         if(!Array.isArray(data) || data.length===0) listEl.innerHTML = '<li class="small">Sin puntuaciones</li>';
                         else listEl.innerHTML = data.map((s,i)=>`<li><span>#${i+1} ${escapeHtml(s.player)}</span><span>${s.score}</span></li>`).join('');
                     }catch(e){ listEl.innerHTML = '<li class="small">No se pudo conectar al servidor</li>'; }
@@ -2953,10 +2957,12 @@
                     if(!v || isNaN(v)) return alert('Ingresa una puntuación numérica');
                     const user = apAuth.getCurrent();
                     try{
-                        const res = await fetch(`${API_BASE}/scores/blockzoid`, { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ player: user.username || 'anon', score: v, meta:{ difficulty: currentDifficulty } }) });
-                        const j = await res.json();
-                        if(j.ok){ scoreInput.value=''; await load(); alert('Puntuación enviada'); }
-                        else alert('Error: '+(j.error||'respuesta inválida'));
+                        if(window.fbStorage) {
+                            await fbStorage.addScore('blockzoid', { player: user.username || 'anon', score: v, meta:{ difficulty: currentDifficulty } });
+                            scoreInput.value=''; 
+                            await load(); 
+                            alert('Puntuación enviada a la nube');
+                        }
                     }catch(e){ alert('Error al enviar puntuación'); }
                 });
             });
@@ -2967,7 +2973,6 @@
 
     <script>
     (function(){
-        const API_BASE = 'http://localhost:3000';
         let sentOnThisEnd = false;
 
             async function sendScore(score){
@@ -2976,15 +2981,8 @@
             try{
                 if(window.fbStorage && fbStorage.addScore){
                     await fbStorage.addScore('blockzoid', { player: user.username || 'anon', score: Number(score) || 0, meta: { wave: wave, money: money, difficulty: currentDifficulty } });
-                    return;
                 }
             }catch(e){ console.warn('fb addScore failed', e); }
-            try{
-                await fetch(`${API_BASE}/scores/blockzoid`, {
-                    method: 'POST', headers: {'content-type':'application/json'},
-                    body: JSON.stringify({ player: user.username || 'anon', score: Number(score) || 0, meta: { wave: wave, money: money, difficulty: currentDifficulty } })
-                });
-            }catch(e){ console.warn('No se pudo enviar puntuación', e); }
         }
 
         function safeRestart(){
